@@ -36,9 +36,6 @@ public interface DockerNode extends InstanceNode {
     void unbindWorkspace() throws MachineException;
 
     @Override
-    String getProjectsFolder();
-
-    @Override
     String getHost();
 
     /**

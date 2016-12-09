@@ -35,7 +35,7 @@ public class LocalCheInfrastructureProvisioner extends DefaultInfrastructureProv
     private final WorkspaceFolderPathProvider workspaceFolderPathProvider;
     private final WindowsPathEscaper          pathEscaper;
     private final String                      projectFolderPath;
-	private final String                      volumesOptions;
+    private final String                      volumesOptions;
 
     @Inject
     public LocalCheInfrastructureProvisioner(AgentConfigApplier agentConfigApplier,

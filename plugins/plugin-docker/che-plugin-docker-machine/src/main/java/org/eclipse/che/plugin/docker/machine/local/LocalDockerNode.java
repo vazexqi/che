@@ -29,7 +29,6 @@ import java.io.IOException;
  */
 public class LocalDockerNode implements DockerNode {
 
-    private final String workspaceFolder;
     private final String host;
 
     @Inject
@@ -37,25 +36,16 @@ public class LocalDockerNode implements DockerNode {
                            WorkspaceFolderPathProvider workspaceFolderNodePathProvider,
                            DockerConnectorConfiguration dockerConnectorConfiguration) throws IOException {
 
-        workspaceFolder = workspaceFolderNodePathProvider.getPath(workspaceId);
+        // TODO investigate whether we can remove that after abandonment of native Che
+        workspaceFolderNodePathProvider.getPath(workspaceId);
         host = dockerConnectorConfiguration.getDockerHost();
     }
 
     @Override
-    public void bindWorkspace() throws MachineException {
-
-    }
+    public void bindWorkspace() throws MachineException {}
 
     @Override
-    public void unbindWorkspace() throws MachineException {
-
-    }
-
-    @Override
-    public String getProjectsFolder() {
-        return workspaceFolder;
-    }
-
+    public void unbindWorkspace() throws MachineException {}
 
     @Override
     public String getHost() {
