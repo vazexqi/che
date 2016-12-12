@@ -47,6 +47,8 @@ public class CommandFileNode extends AbstractCommandNode implements HasAction, V
 
     @Override
     public void updatePresentation(NodePresentation presentation) {
+        super.updatePresentation(presentation);
+
         presentation.setPresentableText(getDisplayName());
     }
 

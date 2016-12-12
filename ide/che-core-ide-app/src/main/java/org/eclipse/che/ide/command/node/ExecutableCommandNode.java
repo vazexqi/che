@@ -35,8 +35,8 @@ public class ExecutableCommandNode extends AbstractCommandNode implements HasAct
                                  CommandTypeRegistry commandTypeRegistry,
                                  IconRegistry iconRegistry) {
         super(data, null, commandTypeRegistry, iconRegistry);
-        this.actionDelegate = actionDelegate;
 
+        this.actionDelegate = actionDelegate;
     }
 
     @Override

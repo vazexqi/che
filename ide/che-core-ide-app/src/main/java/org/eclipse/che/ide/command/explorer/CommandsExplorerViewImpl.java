@@ -75,7 +75,7 @@ public class CommandsExplorerViewImpl extends BaseView<CommandsExplorerView.Acti
         tree.getSelectionModel().addSelectionHandler(new SelectionHandler<Node>() {
             @Override
             public void onSelection(SelectionEvent<Node> event) {
-                Node selectedNode = event.getSelectedItem();
+                final Node selectedNode = event.getSelectedItem();
                 if (selectedNode instanceof CommandTypeNode) {
                     delegate.onCommandTypeSelected(((CommandTypeNode)selectedNode).getData());
                 } else if (selectedNode instanceof CommandFileNode) {
@@ -90,7 +90,6 @@ public class CommandsExplorerViewImpl extends BaseView<CommandsExplorerView.Acti
 
     @Override
     public void setCommands(Map<CommandType, List<ContextualCommand>> commands) {
-        // TODO: rework this delegating
         treeRenderer.setDelegate(delegate);
 
         renderCommands(commands);
