@@ -22,6 +22,7 @@ import org.eclipse.che.ide.command.node.CommandTypeNode;
 import org.eclipse.che.ide.ui.smartTree.Tree;
 import org.eclipse.che.ide.ui.smartTree.TreeStyles;
 import org.eclipse.che.ide.ui.smartTree.presentation.DefaultPresentationRenderer;
+import org.vectomatic.dom.svg.ui.SVGResource;
 
 import static com.google.gwt.user.client.Event.ONCLICK;
 
@@ -45,16 +46,14 @@ class CommandsTreeRenderer extends DefaultPresentationRenderer<Node> {
 
     @Override
     public Element render(final Node node, String domID, Tree.Joint joint, int depth) {
-        Element element = super.render(node, domID, joint, depth);
+        final Element element = super.render(node, domID, joint, depth);
+        final Element nodeContainerElement = element.getFirstChildElement();
 
         if (node instanceof CommandFileNode) {
-            element.addClassName(resources.commandsExplorerCss().categorySubElementHeader());
 
-            // create 'Remove Command' button
-            final SpanElement removeCommandButton = Document.get().createSpanElement();
-            removeCommandButton.appendChild(resources.removeCommandButton().getSvg().getElement());
-            Event.sinkEvents(removeCommandButton, ONCLICK);
-            Event.setEventListener(removeCommandButton, new EventListener() {
+            nodeContainerElement.addClassName(resources.commandsExplorerCss().categorySubElementHeader());
+
+            final SpanElement removeCommandButton = createButton(resources.removeCommandButton(), new EventListener() {
                 @Override
                 public void onBrowserEvent(Event event) {
                     if (ONCLICK == event.getTypeInt()) {
@@ -64,11 +63,7 @@ class CommandsTreeRenderer extends DefaultPresentationRenderer<Node> {
                 }
             });
 
-            // create 'Duplicate Command' button
-            final SpanElement duplicateCommandButton = Document.get().createSpanElement();
-            duplicateCommandButton.appendChild(resources.duplicateCommandButton().getSvg().getElement());
-            Event.sinkEvents(duplicateCommandButton, ONCLICK);
-            Event.setEventListener(duplicateCommandButton, new EventListener() {
+            final SpanElement duplicateCommandButton = createButton(resources.duplicateCommandButton(), new EventListener() {
                 @Override
                 public void onBrowserEvent(Event event) {
                     if (ONCLICK == event.getTypeInt()) {
@@ -84,15 +79,14 @@ class CommandsTreeRenderer extends DefaultPresentationRenderer<Node> {
             buttonsPanel.appendChild(removeCommandButton);
             buttonsPanel.appendChild(duplicateCommandButton);
 
-            element.getFirstChildElement().appendChild(buttonsPanel);
-        } else if (node instanceof CommandTypeNode) {
-            element.getFirstChildElement().addClassName(resources.commandsExplorerCss().categoryHeader());
+            // add additional buttons to node container
+            nodeContainerElement.appendChild(buttonsPanel);
 
-            // create 'Add Command' button
-            final SpanElement addCommandButton = Document.get().createSpanElement();
-            addCommandButton.appendChild(resources.addCommandButton().getSvg().getElement());
-            Event.sinkEvents(addCommandButton, ONCLICK);
-            Event.setEventListener(addCommandButton, new EventListener() {
+        } else if (node instanceof CommandTypeNode) {
+
+            nodeContainerElement.addClassName(resources.commandsExplorerCss().categoryHeader());
+
+            final SpanElement addCommandButton = createButton(resources.addCommandButton(), new EventListener() {
                 @Override
                 public void onBrowserEvent(Event event) {
                     if (ONCLICK == event.getTypeInt()) {
@@ -102,13 +96,23 @@ class CommandsTreeRenderer extends DefaultPresentationRenderer<Node> {
                 }
             });
 
-            element.getFirstChildElement().appendChild(addCommandButton);
+            nodeContainerElement.appendChild(addCommandButton);
         }
 
         return element;
     }
 
-    public void setDelegate(CommandsExplorerView.ActionDelegate delegate) {
+    private SpanElement createButton(SVGResource icon, EventListener eventListener) {
+        final SpanElement button = Document.get().createSpanElement();
+        button.appendChild(icon.getSvg().getElement());
+
+        Event.sinkEvents(button, ONCLICK);
+        Event.setEventListener(button, eventListener);
+
+        return button;
+    }
+
+    void setDelegate(CommandsExplorerView.ActionDelegate delegate) {
         this.delegate = delegate;
     }
 }

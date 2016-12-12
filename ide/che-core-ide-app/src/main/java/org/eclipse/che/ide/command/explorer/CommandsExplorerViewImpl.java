@@ -81,6 +81,12 @@ public class CommandsExplorerViewImpl extends BaseView<CommandsExplorerView.Acti
                 } else if (selectedNode instanceof CommandFileNode) {
                     delegate.onCommandSelected(((CommandFileNode)selectedNode).getData());
                 }
+
+                for (Node node : tree.getNodeStorage().getAll()) {
+                    tree.getNodeDescriptor(node).getNodeContainerElement().removeAttribute("selected");
+                }
+
+                tree.getNodeDescriptor(selectedNode).getNodeContainerElement().setAttribute("selected", "selected");
             }
         });
 

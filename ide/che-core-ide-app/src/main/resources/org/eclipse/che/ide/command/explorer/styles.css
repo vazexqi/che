@@ -8,40 +8,12 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-@url findIcon findIcon;
 @eval categoryHeaderButtonHoverColor org.eclipse.che.ide.api.theme.Style.theme.categoryHeaderButtonHoverColor();
 @eval categoryHeaderButtonColor org.eclipse.che.ide.api.theme.Style.theme.categoryHeaderButtonColor();
 @eval categoryElementButtonHoverColor org.eclipse.che.ide.api.theme.Style.theme.categoryElementButtonHoverColor();
 @eval categoryElementButtonColor org.eclipse.che.ide.api.theme.Style.theme.categoryElementButtonColor();
 @eval categorySelectElementBackgroundColor org.eclipse.che.ide.api.theme.Style.theme.categorySelectElementBackgroundColor();
 @eval categorySelectElementColor org.eclipse.che.ide.api.theme.Style.theme.categorySelectElementColor();
-
-.categoryHeader svg {
-    width: 15px;
-    height: 15px;
-}
-
-.categoryHeader > div > div {
-    position: relative;
-    top: 1px;
-    display: inline;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-.categoryHeader svg:first-child {
-    text-align: center;
-    margin-left: 2px;
-    height: 100%;
-    padding: 0 2px;
-}
-
-.categoryHeader svg:first-child {
-    vertical-align: middle;
-    margin: 0 4px 3px 0;
-    fill: blueIconColor;
-    stroke: blueIconColor;
-}
 
 .categoryHeader span:last-child,
 .categorySubElementHeader .buttonArea > span {
@@ -70,35 +42,31 @@
 }
 
 .categorySubElementHeader {
-    position: relative;
-    padding-right: 5px;
-    margin-right: 0;
-    font-weight: bold;
+    padding-right: 1px;
     line-height: 18px;
 }
 
-div.categorySubElementHeader /*[selected]*/
-{
+div.categorySubElementHeader[selected] {
     background: categorySelectElementBackgroundColor;
     color: categorySelectElementColor;
 }
 
-div.categorySubElementHeader /*[selected]*/ .buttonArea {
+div.categorySubElementHeader[selected] .buttonArea {
     display: inline;
 }
 
-div.categorySubElementHeader /*[selected]*/ .buttonArea svg {
+div.categorySubElementHeader[selected] .buttonArea svg {
     opacity: 1;
     fill: categoryElementButtonColor;
     stroke: categoryElementButtonColor;
 }
 
-div.categorySubElementHeader /*[selected]*/ .buttonArea span:hover > svg {
+div.categorySubElementHeader[selected] .buttonArea span:hover > svg {
     fill: categoryElementButtonHoverColor;
     stroke: categoryElementButtonHoverColor;
 }
 
 .buttonArea {
-    /*display: none;*/
+    display: none;
     float: right;
 }
