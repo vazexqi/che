@@ -142,4 +142,9 @@ public class FontAwesome {
      */
     public static final String SQUARE_O = "<i class=\"fa fa-square-o\"></i>";
 
+    /**
+     * http://fontawesome.io/icon/pause/
+     */
+    public static final String PAUSE = "<i class=\"fa fa-pause\"></i>";
+
 }
