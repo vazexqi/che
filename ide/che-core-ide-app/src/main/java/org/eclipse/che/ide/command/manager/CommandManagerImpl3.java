@@ -168,6 +168,16 @@ public class CommandManagerImpl3 implements CommandManager3, WsAgentComponent, W
 
     @Override
     public Promise<ContextualCommand> createCommand(ContextualCommand command) {
+        return doCreateCommand(command).then(new Operation<ContextualCommand>() {
+            @Override
+            public void apply(ContextualCommand newCommand) throws OperationException {
+                notifyCommandAdded(newCommand);
+            }
+        });
+    }
+
+    /** Adds the command without notifying listeners. */
+    private Promise<ContextualCommand> doCreateCommand(ContextualCommand command) {
         final ApplicableContext context = command.getApplicableContext();
 
         final CommandType commandType = commandTypeRegistry.getCommandTypeById(command.getType());
@@ -220,8 +230,6 @@ public class CommandManagerImpl3 implements CommandManager3, WsAgentComponent, W
             public ContextualCommand apply(ArrayOf<?> ignore) throws FunctionException {
                 commands.put(newCommand.getName(), newCommand);
 
-                notifyCommandAdded(newCommand);
-
                 return newCommand;
             }
         });
@@ -238,16 +246,37 @@ public class CommandManagerImpl3 implements CommandManager3, WsAgentComponent, W
         // Use the simplest way to update command:
         // 1) remove existing command;
         // 2) create new one.
-        return removeCommand(commandName).thenPromise(new Function<Void, Promise<ContextualCommand>>() {
+        return doRemoveCommand(commandName).thenPromise(new Function<Void, Promise<ContextualCommand>>() {
             @Override
             public Promise<ContextualCommand> apply(Void arg) throws FunctionException {
-                return createCommand(commandToUpdate);
+                return doCreateCommand(commandToUpdate).then(new Operation<ContextualCommand>() {
+                    @Override
+                    public void apply(ContextualCommand arg) throws OperationException {
+                        notifyCommandUpdated(arg);
+                    }
+                });
             }
         });
     }
 
     @Override
     public Promise<Void> removeCommand(final String commandName) {
+        final ContextualCommand command = commands.get(commandName);
+
+        if (command == null) {
+            return promiseProvider.reject(new Exception("Command '" + commandName + "' does not exist."));
+        }
+
+        return doRemoveCommand(commandName).then(new Operation<Void>() {
+            @Override
+            public void apply(Void arg) throws OperationException {
+                notifyCommandRemoved(command);
+            }
+        });
+    }
+
+    /** Removes the command without notifying listeners. */
+    private Promise<Void> doRemoveCommand(final String commandName) {
         final ContextualCommand command = commands.get(commandName);
 
         if (command == null) {
@@ -294,8 +323,6 @@ public class CommandManagerImpl3 implements CommandManager3, WsAgentComponent, W
             @Override
             public Void apply(ArrayOf<?> arg) throws FunctionException {
                 commands.remove(command.getName());
-
-                notifyCommandRemoved(command);
 
                 return null;
             }
