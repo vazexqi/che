@@ -50,7 +50,7 @@ func (wp *wsPty) Stop(finalizer *ReadWriteRoutingFinalizer) {
 	closeFile(wp.PtyFile, finalizer)
 	pid := wp.Cmd.Process.Pid;
 
-	//See more https://en.wikipedia.org/wiki/Unix_signal#SIGHUP
+	//See more https://en.wikipedia.org/wiki/Unix_signal#SIGHUP and more https://en.wikipedia.org/wiki/SIGHUP
 	if pgid, err := syscall.Getpgid(pid); err == nil {
 		if err := syscall.Kill(-pgid, syscall.SIGHUP); err != nil {
 			fmt.Errorf("Failed to SIGHUP terminal process by pgid: '%s'. Cause: '%s'", pgid, err);
@@ -282,7 +282,8 @@ func ptyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func waitAndClose(wp *wsPty, finalizer *ReadWriteRoutingFinalizer, conn *websocket.Conn, reader io.ReadCloser) {
-	if err := wp.Cmd.Wait(); err != nil {
+	//ignore GIGHUP(hang up) error it's a normal signal to close terminal
+	if err := wp.Cmd.Wait(); err != nil && err.Error() != "signal: hangup" {
 		log.Printf("Failed to stop process, due to occurred error '%s'", err.Error())
 	}
 
