@@ -12,7 +12,7 @@ package org.eclipse.che.plugin.docker.machine.local;
 
 import com.google.inject.assistedinject.Assisted;
 
-import org.eclipse.che.api.machine.server.exception.MachineException;
+import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.plugin.docker.client.DockerConnectorConfiguration;
 import org.eclipse.che.plugin.docker.machine.node.DockerNode;
 import org.eclipse.che.plugin.docker.machine.node.WorkspaceFolderPathProvider;
@@ -42,10 +42,10 @@ public class LocalDockerNode implements DockerNode {
     }
 
     @Override
-    public void bindWorkspace() throws MachineException {}
+    public void bindWorkspace() throws ServerException {}
 
     @Override
-    public void unbindWorkspace() throws MachineException {}
+    public void unbindWorkspace() throws ServerException {}
 
     @Override
     public String getHost() {
