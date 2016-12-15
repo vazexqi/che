@@ -28,7 +28,7 @@ import {ProjectsConfig} from './projects/projects-config';
 import {ProxySettingsConfig} from './proxy/proxy-settings.constant';
 import {WorkspacesConfig} from './workspaces/workspaces-config';
 import {StacksConfig} from './stacks/stacks-config';
-import {DemoComponentsCtrl} from './demo-components/demo-components.controller';
+import {DemoComponentsController} from './demo-components/demo-components.controller';
 
 
 // init module
@@ -91,8 +91,8 @@ initModule.config(['$routeProvider', 'ngClipProvider', ($routeProvider, ngClipPr
     $routeProvider.accessWhen('/demo-components', {
       title: 'Demo Components',
       templateUrl: 'app/demo-components/demo-components.html',
-      controller: 'DemoComponentsCtrl',
-      controllerAs: 'demoComponentsCtrl'
+      controller: 'DemoComponentsController',
+      controllerAs: 'demoComponentsController'
     });
   }
 
@@ -361,7 +361,7 @@ initModule.config(['$routeProvider', '$locationProvider', '$httpProvider', ($rou
 var instanceRegister = new Register(initModule);
 
 if (DEV) {
-  instanceRegister.controller('DemoComponentsCtrl', DemoComponentsCtrl);
+  instanceRegister.controller('DemoComponentsController', DemoComponentsController);
 }
 
 new ProxySettingsConfig(instanceRegister);
