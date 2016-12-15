@@ -8,23 +8,19 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.ide.command.node;
 
-import org.eclipse.che.ide.api.command.CommandGoal;
-import org.eclipse.che.ide.api.command.ContextualCommand;
-
-import java.util.List;
+package org.eclipse.che.ide.api.command;
 
 /**
- * Factory for different command tree nodes.
+ * Contract for commands goal.
  *
  * @author Artem Zatsarynnyi
  */
-public interface NodeFactory {
+public interface CommandGoal {
 
-    CommandGoalNode newCommandGoalNode(CommandGoal data, List<? extends AbstractCommandNode> commands);
+    /** Returns goal ID. */
+    String getId();
 
-    ExecutableCommandNode newExecutableCommandNode(ContextualCommand command, ExecutableCommandNode.ActionDelegate actionDelegate);
-
-    CommandFileNode newCommandFileNode(ContextualCommand data);
+    /** Returns goal's display name. */
+    String getDisplayName();
 }

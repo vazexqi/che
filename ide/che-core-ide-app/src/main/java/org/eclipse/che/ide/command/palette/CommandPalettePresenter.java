@@ -19,7 +19,7 @@ import org.eclipse.che.api.promises.client.Operation;
 import org.eclipse.che.api.promises.client.OperationException;
 import org.eclipse.che.ide.api.app.AppContext;
 import org.eclipse.che.ide.api.command.CommandManager;
-import org.eclipse.che.ide.api.command.CommandManager3;
+import org.eclipse.che.ide.api.command.ContextualCommandManager;
 import org.eclipse.che.ide.api.command.ContextualCommand;
 import org.eclipse.che.ide.api.dialogs.DialogFactory;
 import org.eclipse.che.ide.machine.chooser.MachineChooser;
@@ -38,16 +38,16 @@ import static org.eclipse.che.ide.util.StringUtils.containsIgnoreCase;
 @Singleton
 public class CommandPalettePresenter implements CommandPaletteView.ActionDelegate {
 
-    private final CommandPaletteView view;
-    private final CommandManager3    commandManager;
-    private final CommandManager     commandExecutor;
-    private final DialogFactory      dialogFactory;
-    private final AppContext         appContext;
-    private final MachineChooser     machineChooser;
+    private final CommandPaletteView       view;
+    private final ContextualCommandManager commandManager;
+    private final CommandManager           commandExecutor;
+    private final DialogFactory            dialogFactory;
+    private final AppContext               appContext;
+    private final MachineChooser           machineChooser;
 
     @Inject
     public CommandPalettePresenter(CommandPaletteView view,
-                                   CommandManager3 commandManager,
+                                   ContextualCommandManager commandManager,
                                    CommandManager commandExecutor,
                                    DialogFactory dialogFactory,
                                    AppContext appContext,

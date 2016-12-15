@@ -27,7 +27,7 @@ import org.eclipse.che.api.promises.client.PromiseProvider;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.ide.api.app.AppContext;
 import org.eclipse.che.ide.api.command.CommandImpl;
-import org.eclipse.che.ide.api.command.CommandManager3;
+import org.eclipse.che.ide.api.command.ContextualCommandManager;
 import org.eclipse.che.ide.api.command.CommandType;
 import org.eclipse.che.ide.api.command.CommandTypeRegistry;
 import org.eclipse.che.ide.api.command.ContextualCommand;
@@ -44,15 +44,16 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_GOAL_ATTRIBUTE_NAME;
 import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_PREVIEW_URL_ATTRIBUTE_NAME;
 
 /**
- * Implementation of {@link CommandManager3}.
+ * Implementation of {@link ContextualCommandManager}.
  *
  * @author Artem Zatsarynnyi
  */
 @Singleton
-public class CommandManagerImpl3 implements CommandManager3, WsAgentComponent, WorkspaceReadyEvent.WorkspaceReadyHandler {
+public class ContextualCommandManagerImpl implements ContextualCommandManager, WsAgentComponent, WorkspaceReadyEvent.WorkspaceReadyHandler {
 
     private final AppContext                      appContext;
     private final PromiseProvider                 promiseProvider;
@@ -65,12 +66,12 @@ public class CommandManagerImpl3 implements CommandManager3, WsAgentComponent, W
     private final Set<CommandChangedListener>    commandChangedListeners;
 
     @Inject
-    public CommandManagerImpl3(AppContext appContext,
-                               PromiseProvider promiseProvider,
-                               CommandTypeRegistry commandTypeRegistry,
-                               ProjectCommandManagerDelegate projectCommandManagerDelegate,
-                               WorkspaceCommandManagerDelegate workspaceCommandManagerDelegate,
-                               EventBus eventBus) {
+    public ContextualCommandManagerImpl(AppContext appContext,
+                                        PromiseProvider promiseProvider,
+                                        CommandTypeRegistry commandTypeRegistry,
+                                        ProjectCommandManagerDelegate projectCommandManagerDelegate,
+                                        WorkspaceCommandManagerDelegate workspaceCommandManagerDelegate,
+                                        EventBus eventBus) {
         this.appContext = appContext;
         this.promiseProvider = promiseProvider;
         this.commandTypeRegistry = commandTypeRegistry;
@@ -149,7 +150,7 @@ public class CommandManagerImpl3 implements CommandManager3, WsAgentComponent, W
     }
 
     @Override
-    public Promise<ContextualCommand> createCommand(String commandTypeId, ApplicableContext applicableContext) {
+    public Promise<ContextualCommand> createCommand(String goal, String commandTypeId, ApplicableContext applicableContext) {
         final CommandType commandType = commandTypeRegistry.getCommandTypeById(commandTypeId);
 
         if (commandType == null) {
@@ -158,6 +159,7 @@ public class CommandManagerImpl3 implements CommandManager3, WsAgentComponent, W
 
         final Map<String, String> attributes = new HashMap<>(1);
         attributes.put(COMMAND_PREVIEW_URL_ATTRIBUTE_NAME, commandType.getPreviewUrlTemplate());
+        attributes.put(COMMAND_GOAL_ATTRIBUTE_NAME, goal);
 
         return createCommand(new ContextualCommand(getUniqueCommandName(commandTypeId, null),
                                                    commandType.getCommandLineTemplate(),

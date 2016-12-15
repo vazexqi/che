@@ -9,9 +9,9 @@
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
 
-package org.eclipse.che.ide.machine.chooser;
+package org.eclipse.che.ide.command.explorer;
 
-import org.eclipse.che.api.core.model.machine.Machine;
+import org.eclipse.che.ide.api.command.CommandType;
 import org.eclipse.che.ide.api.mvp.View;
 
 import java.util.List;
@@ -21,24 +21,24 @@ import java.util.List;
  *
  * @author Artem Zatsarynnyi
  */
-public interface MachineChooserView extends View<MachineChooserView.ActionDelegate> {
+public interface CommandTypeChooserView extends View<CommandTypeChooserView.ActionDelegate> {
 
     /** Show the view. */
-    void show();
+    void show(int left, int top);
 
     /** Close the view. */
     void close();
 
-    /** Sets the machines to display in the view. */
-    void setMachines(List<? extends Machine> machines);
+    /** Sets the command types to display in the view. */
+    void setTypes(List<CommandType> commandTypes);
 
     /** The action delegate for this view. */
     interface ActionDelegate {
 
-        /** Called when machine is selected. */
-        void onMachineSelected(Machine machine);
+        /** Called when command type is selected. */
+        void onSelected(CommandType commandType);
 
-        /** Called when machine selection has been canceled. Note that view will be already closed. */
+        /** Called when command type selection has been canceled. Note that view will be already closed. */
         void onCanceled();
     }
 }

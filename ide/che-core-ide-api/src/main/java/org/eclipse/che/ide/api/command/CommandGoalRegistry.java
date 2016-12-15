@@ -8,23 +8,30 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.ide.command.node;
 
-import org.eclipse.che.ide.api.command.CommandGoal;
-import org.eclipse.che.ide.api.command.ContextualCommand;
+package org.eclipse.che.ide.api.command;
+
+import org.eclipse.che.commons.annotation.Nullable;
 
 import java.util.List;
 
 /**
- * Factory for different command tree nodes.
+ * Registry of predefined command goals.
  *
  * @author Artem Zatsarynnyi
  */
-public interface NodeFactory {
+public interface CommandGoalRegistry {
 
-    CommandGoalNode newCommandGoalNode(CommandGoal data, List<? extends AbstractCommandNode> commands);
+    /**
+     * Returns {@link CommandGoal} by the given {@code id} or {@code null} if none.
+     *
+     * @param id
+     *         the ID of the command goal
+     * @return command goal or {@code null}
+     */
+    @Nullable
+    CommandGoal getCommandGoalById(String id);
 
-    ExecutableCommandNode newExecutableCommandNode(ContextualCommand command, ExecutableCommandNode.ActionDelegate actionDelegate);
-
-    CommandFileNode newCommandFileNode(ContextualCommand data);
+    /** Returns all registered predefined {@link CommandGoal}s. */
+    List<CommandGoal> getCommandGoals();
 }

@@ -22,11 +22,13 @@ import org.eclipse.che.api.promises.client.OperationException;
 import org.eclipse.che.api.promises.client.PromiseError;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.ide.DelayedTask;
-import org.eclipse.che.ide.api.command.CommandManager3;
+import org.eclipse.che.ide.api.command.BaseCommandGoal;
+import org.eclipse.che.ide.api.command.CommandGoal;
+import org.eclipse.che.ide.api.command.CommandGoalRegistry;
 import org.eclipse.che.ide.api.command.CommandType;
-import org.eclipse.che.ide.api.command.CommandTypeRegistry;
 import org.eclipse.che.ide.api.command.ContextualCommand;
 import org.eclipse.che.ide.api.command.ContextualCommand.ApplicableContext;
+import org.eclipse.che.ide.api.command.ContextualCommandManager;
 import org.eclipse.che.ide.api.machine.events.WsAgentStateEvent;
 import org.eclipse.che.ide.api.machine.events.WsAgentStateHandler;
 import org.eclipse.che.ide.api.notification.NotificationManager;
@@ -39,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_GOAL_ATTRIBUTE_NAME;
 import static org.eclipse.che.ide.api.notification.StatusNotification.DisplayMode.EMERGE_MODE;
 import static org.eclipse.che.ide.api.notification.StatusNotification.Status.FAIL;
 import static org.eclipse.che.ide.api.parts.PartStackType.NAVIGATION;
@@ -51,7 +54,7 @@ import static org.eclipse.che.ide.api.parts.PartStackType.NAVIGATION;
 @Singleton
 public class CommandsExplorerPresenter extends BasePresenter implements CommandsExplorerView.ActionDelegate,
                                                                         WsAgentStateHandler,
-                                                                        CommandManager3.CommandChangedListener {
+                                                                        ContextualCommandManager.CommandChangedListener {
 
     private static final String TITLE   = "Commands";
     private static final String TOOLTIP = "Manage commands";
@@ -59,9 +62,10 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
     private final CommandsExplorerView      view;
     private final CommandsExplorerResources resources;
     private final WorkspaceAgent            workspaceAgent;
-    private final CommandManager3           commandManager;
-    private final CommandTypeRegistry       commandTypeRegistry;
+    private final ContextualCommandManager  commandManager;
+    private final CommandGoalRegistry       commandGoalRegistry;
     private final NotificationManager       notificationManager;
+    private final CommandTypeChooser        commandTypeChooser;
 
     /** {@link DelayedTask} for refreshing the view. */
     private DelayedTask refreshViewTask = new DelayedTask() {
@@ -76,15 +80,17 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
                                      CommandsExplorerResources commandsExplorerResources,
                                      WorkspaceAgent workspaceAgent,
                                      EventBus eventBus,
-                                     CommandManager3 commandManager,
-                                     CommandTypeRegistry commandTypeRegistry,
-                                     NotificationManager notificationManager) {
+                                     ContextualCommandManager commandManager,
+                                     CommandGoalRegistry commandGoalRegistry,
+                                     NotificationManager notificationManager,
+                                     CommandTypeChooser commandTypeChooser) {
         this.view = view;
         resources = commandsExplorerResources;
         this.workspaceAgent = workspaceAgent;
         this.commandManager = commandManager;
-        this.commandTypeRegistry = commandTypeRegistry;
+        this.commandGoalRegistry = commandGoalRegistry;
         this.notificationManager = notificationManager;
+        this.commandTypeChooser = commandTypeChooser;
 
         view.setDelegate(this);
 
@@ -128,33 +134,34 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
     }
 
     @Override
-    public void onCommandTypeSelected(CommandType commandType) {
-    }
-
-    @Override
-    public void onCommandSelected(ContextualCommand command) {
-    }
-
-    @Override
-    public void onCommandAdd() {
+    public void onCommandAdd(int left, int top) {
         // by default, command should be applicable to the workspace only
         final ApplicableContext defaultApplicableContext = new ApplicableContext();
         defaultApplicableContext.setWorkspaceApplicable(true);
 
-        final CommandType selectedCommandType = view.getSelectedCommandType();
-        if (selectedCommandType != null) {
-            commandManager.createCommand(selectedCommandType.getId(), defaultApplicableContext).then(new Operation<ContextualCommand>() {
-                @Override
-                public void apply(ContextualCommand arg) throws OperationException {
-                    view.selectCommand(arg);
+        commandTypeChooser.show(left, top).then(new Operation<CommandType>() {
+            @Override
+            public void apply(CommandType selectedCommandType) throws OperationException {
+                final CommandGoal selectedCommandGoal = view.getSelectedCommandGoal();
+
+                if (selectedCommandType != null && selectedCommandGoal != null) {
+                    commandManager.createCommand(selectedCommandGoal.getId(),
+                                                 selectedCommandType.getId(),
+                                                 defaultApplicableContext)
+                                  .then(new Operation<ContextualCommand>() {
+                                      @Override
+                                      public void apply(ContextualCommand arg) throws OperationException {
+                                          view.selectCommand(arg);
+                                      }
+                                  }).catchError(new Operation<PromiseError>() {
+                        @Override
+                        public void apply(PromiseError arg) throws OperationException {
+                            notificationManager.notify("Unable to create command", arg.getMessage(), FAIL, EMERGE_MODE);
+                        }
+                    });
                 }
-            }).catchError(new Operation<PromiseError>() {
-                @Override
-                public void apply(PromiseError arg) throws OperationException {
-                    notificationManager.notify("Unable to create command", arg.getMessage(), FAIL, EMERGE_MODE);
-                }
-            });
-        }
+            }
+        });
     }
 
     @Override
@@ -214,26 +221,39 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
     }
 
     private void refreshView() {
-        final Map<CommandType, List<ContextualCommand>> commands = new HashMap<>();
+        final Map<CommandGoal, List<ContextualCommand>> commandsByGoal = new HashMap<>();
 
-        // all registered command types need to be shown in view
-        // so populate map by all registered command types
-        for (CommandType commandType : commandTypeRegistry.getCommandTypes()) {
-            commands.put(commandType, new ArrayList<ContextualCommand>());
+        // all registered command goals need to be shown in view
+        // so populate map by all registered command goals
+        for (CommandGoal goal : commandGoalRegistry.getCommandGoals()) {
+            commandsByGoal.put(goal, new ArrayList<ContextualCommand>());
         }
 
         for (ContextualCommand command : commandManager.getCommands()) {
-            final CommandType commandType = commandTypeRegistry.getCommandTypeById(command.getType());
+            String goal = command.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
 
-            List<ContextualCommand> commandsByType = commands.get(commandType);
-            if (commandsByType == null) {
-                commandsByType = new ArrayList<>();
-                commands.put(commandType, commandsByType);
+            if (goal == null) {
+                // command doesn't have a goal
+                // so let's use common goal
+                goal = commandGoalRegistry.getCommandGoalById("common").getId();
             }
 
-            commandsByType.add(command);
+            CommandGoal commandGoal = commandGoalRegistry.getCommandGoalById(goal);
+
+            if (commandGoal == null) {
+                commandGoal = new BaseCommandGoal(goal, goal);
+            }
+
+            List<ContextualCommand> commandsOfType = commandsByGoal.get(commandGoal);
+
+            if (commandsOfType == null) {
+                commandsOfType = new ArrayList<>();
+                commandsByGoal.put(commandGoal, commandsOfType);
+            }
+
+            commandsOfType.add(command);
         }
 
-        view.setCommands(commands);
+        view.setCommands(commandsByGoal);
     }
 }

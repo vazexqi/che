@@ -18,9 +18,9 @@ import com.google.inject.Singleton;
 import org.eclipse.che.ide.api.action.Action;
 import org.eclipse.che.ide.api.action.ActionManager;
 import org.eclipse.che.ide.api.action.DefaultActionGroup;
-import org.eclipse.che.ide.api.command.CommandManager3;
-import org.eclipse.che.ide.api.command.CommandManager3.CommandChangedListener;
-import org.eclipse.che.ide.api.command.CommandManager3.CommandLoadedListener;
+import org.eclipse.che.ide.api.command.ContextualCommandManager;
+import org.eclipse.che.ide.api.command.ContextualCommandManager.CommandChangedListener;
+import org.eclipse.che.ide.api.command.ContextualCommandManager.CommandLoadedListener;
 import org.eclipse.che.ide.api.command.ContextualCommand;
 import org.eclipse.che.ide.api.component.Component;
 
@@ -44,7 +44,7 @@ public class ContextualCommandActionManager implements Component,
                                                        CommandLoadedListener,
                                                        CommandChangedListener {
 
-    private final CommandManager3                commandManager;
+    private final ContextualCommandManager       commandManager;
     private final ActionManager                  actionManager;
     private final CommandsActionGroup            commandsActionGroup;
     private final CommandTypePopUpGroupFactory   commandTypePopUpGroupFactory;
@@ -54,7 +54,7 @@ public class ContextualCommandActionManager implements Component,
     private final Map<String, DefaultActionGroup> commandTypePopUpGroups;
 
     @Inject
-    public ContextualCommandActionManager(CommandManager3 commandManager,
+    public ContextualCommandActionManager(ContextualCommandManager commandManager,
                                           ActionManager actionManager,
                                           CommandsActionGroup commandsActionGroup,
                                           CommandTypePopUpGroupFactory commandTypePopUpGroupFactory,

@@ -8,23 +8,19 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.ide.command.node;
 
-import org.eclipse.che.ide.api.command.CommandGoal;
-import org.eclipse.che.ide.api.command.ContextualCommand;
+package org.eclipse.che.ide.command.goal;
 
-import java.util.List;
+import org.eclipse.che.ide.api.command.BaseCommandGoal;
 
 /**
- * Factory for different command tree nodes.
+ * Represents predefined 'Debug' goal.
  *
  * @author Artem Zatsarynnyi
  */
-public interface NodeFactory {
+public class DebugGoal extends BaseCommandGoal {
 
-    CommandGoalNode newCommandGoalNode(CommandGoal data, List<? extends AbstractCommandNode> commands);
-
-    ExecutableCommandNode newExecutableCommandNode(ContextualCommand command, ExecutableCommandNode.ActionDelegate actionDelegate);
-
-    CommandFileNode newCommandFileNode(ContextualCommand data);
+    public DebugGoal() {
+        super("debug", "debug");
+    }
 }

@@ -20,12 +20,12 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.commons.annotation.Nullable;
-import org.eclipse.che.ide.api.command.CommandType;
+import org.eclipse.che.ide.api.command.CommandGoal;
 import org.eclipse.che.ide.api.command.ContextualCommand;
 import org.eclipse.che.ide.api.data.tree.Node;
 import org.eclipse.che.ide.api.parts.base.BaseView;
 import org.eclipse.che.ide.command.node.CommandFileNode;
-import org.eclipse.che.ide.command.node.CommandTypeNode;
+import org.eclipse.che.ide.command.node.CommandGoalNode;
 import org.eclipse.che.ide.command.node.NodeFactory;
 import org.eclipse.che.ide.ui.smartTree.NodeLoader;
 import org.eclipse.che.ide.ui.smartTree.NodeStorage;
@@ -75,43 +75,35 @@ public class CommandsExplorerViewImpl extends BaseView<CommandsExplorerView.Acti
         tree.getSelectionModel().addSelectionHandler(new SelectionHandler<Node>() {
             @Override
             public void onSelection(SelectionEvent<Node> event) {
-                final Node selectedNode = event.getSelectedItem();
-                if (selectedNode instanceof CommandTypeNode) {
-                    delegate.onCommandTypeSelected(((CommandTypeNode)selectedNode).getData());
-                } else if (selectedNode instanceof CommandFileNode) {
-                    delegate.onCommandSelected(((CommandFileNode)selectedNode).getData());
-                }
-
                 for (Node node : tree.getNodeStorage().getAll()) {
                     tree.getNodeDescriptor(node).getNodeContainerElement().removeAttribute("selected");
                 }
 
-                tree.getNodeDescriptor(selectedNode).getNodeContainerElement().setAttribute("selected", "selected");
+                tree.getNodeDescriptor(event.getSelectedItem()).getNodeContainerElement().setAttribute("selected", "selected");
             }
         });
 
         setContentWidget(UI_BINDER.createAndBindUi(this));
     }
 
-
     @Override
-    public void setCommands(Map<CommandType, List<ContextualCommand>> commands) {
+    public void setCommands(Map<CommandGoal, List<ContextualCommand>> commands) {
         treeRenderer.setDelegate(delegate);
 
         renderCommands(commands);
     }
 
-    private void renderCommands(Map<CommandType, List<ContextualCommand>> commands) {
+    private void renderCommands(Map<CommandGoal, List<ContextualCommand>> commands) {
         tree.getNodeStorage().clear();
 
-        for (Map.Entry<CommandType, List<ContextualCommand>> entry : commands.entrySet()) {
+        for (Map.Entry<CommandGoal, List<ContextualCommand>> entry : commands.entrySet()) {
             List<CommandFileNode> commandNodes = new ArrayList<>(entry.getValue().size());
             for (ContextualCommand command : entry.getValue()) {
                 commandNodes.add(nodeFactory.newCommandFileNode(command));
             }
 
-            final CommandTypeNode commandTypeNode = nodeFactory.newCommandTypeNode(entry.getKey(), commandNodes);
-            tree.getNodeStorage().add(commandTypeNode);
+            final CommandGoalNode commandGoalNode = nodeFactory.newCommandGoalNode(entry.getKey(), commandNodes);
+            tree.getNodeStorage().add(commandGoalNode);
         }
 
         tree.expandAll();
@@ -119,28 +111,14 @@ public class CommandsExplorerViewImpl extends BaseView<CommandsExplorerView.Acti
 
     @Nullable
     @Override
-    public CommandType getSelectedCommandType() {
+    public CommandGoal getSelectedCommandGoal() {
         final List<Node> selectedNodes = tree.getSelectionModel().getSelectedNodes();
 
         if (!selectedNodes.isEmpty()) {
             final Node selectedNode = selectedNodes.get(0);
-            if (selectedNode instanceof CommandTypeNode) {
-                return ((CommandTypeNode)selectedNode).getData();
-            }
-        }
 
-        return null;
-    }
-
-    @Nullable
-    @Override
-    public ContextualCommand getSelectedCommand() {
-        final List<Node> selectedNodes = tree.getSelectionModel().getSelectedNodes();
-
-        if (!selectedNodes.isEmpty()) {
-            final Node selectedNode = selectedNodes.get(0);
-            if (selectedNode instanceof CommandFileNode) {
-                return ((CommandFileNode)selectedNode).getData();
+            if (selectedNode instanceof CommandGoalNode) {
+                return ((CommandGoalNode)selectedNode).getData();
             }
         }
 

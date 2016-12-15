@@ -20,8 +20,9 @@ import org.eclipse.che.api.promises.client.OperationException;
 import org.eclipse.che.api.promises.client.PromiseError;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.ide.CoreLocalizationConstant;
-import org.eclipse.che.ide.api.command.CommandManager3;
 import org.eclipse.che.ide.api.command.ContextualCommand;
+import org.eclipse.che.ide.api.command.ContextualCommandManager;
+import org.eclipse.che.ide.api.command.ContextualCommandManager.CommandChangedListener;
 import org.eclipse.che.ide.api.dialogs.CancelCallback;
 import org.eclipse.che.ide.api.dialogs.ConfirmCallback;
 import org.eclipse.che.ide.api.dialogs.DialogFactory;
@@ -53,12 +54,12 @@ import static org.eclipse.che.ide.api.notification.StatusNotification.Status.WAR
  * @author Artem Zatsarynnyi
  */
 public class CommandEditor extends AbstractEditorPresenter implements CommandEditorView.ActionDelegate,
-                                                                      CommandManager3.CommandChangedListener {
+                                                                      CommandChangedListener {
 
     private final CommandEditorView        view;
     private final WorkspaceAgent           workspaceAgent;
     private final IconRegistry             iconRegistry;
-    private final CommandManager3          commandManager;
+    private final ContextualCommandManager commandManager;
     private final NotificationManager      notificationManager;
     private final DialogFactory            dialogFactory;
     private final EditorAgent              editorAgent;
@@ -75,7 +76,7 @@ public class CommandEditor extends AbstractEditorPresenter implements CommandEdi
     public CommandEditor(CommandEditorView view,
                          WorkspaceAgent workspaceAgent,
                          IconRegistry iconRegistry,
-                         CommandManager3 commandManager,
+                         ContextualCommandManager commandManager,
                          InfoPage infoPage,
                          ArgumentsPage argumentsPage,
                          PreviewUrlPage previewUrlPage,

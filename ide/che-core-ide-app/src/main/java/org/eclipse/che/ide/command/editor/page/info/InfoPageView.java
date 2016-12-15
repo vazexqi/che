@@ -12,9 +12,11 @@ package org.eclipse.che.ide.command.editor.page.info;
 
 import com.google.inject.ImplementedBy;
 
+import org.eclipse.che.ide.api.command.CommandGoal;
 import org.eclipse.che.ide.api.mvp.View;
 import org.eclipse.che.ide.api.resources.Project;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,11 +27,14 @@ import java.util.Map;
 @ImplementedBy(InfoPageViewImpl.class)
 public interface InfoPageView extends View<InfoPageView.ActionDelegate> {
 
-    /** Returns the command's name value. */
-    String getCommandName();
-
     /** Sets the command's name value. */
     void setCommandName(String name);
+
+    /** Set the list of goals which are available to set for command. */
+    void setAvailableGoals(List<CommandGoal> goals);
+
+    /** Sets the command's goal value. */
+    void setGoal(String goal);
 
     void setWorkspace(boolean value);
 
@@ -37,6 +42,14 @@ public interface InfoPageView extends View<InfoPageView.ActionDelegate> {
 
     /** The action delegate for this view. */
     interface ActionDelegate {
+
+        /**
+         * Called when command goal has been changed.
+         *
+         * @param goal
+         *         changed value of the command goal
+         */
+        void onGoalChanged(String goal);
 
         /**
          * Called when command's name has been changed.

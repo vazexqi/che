@@ -11,6 +11,7 @@
 package org.eclipse.che.ide.command.editor.page.info;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -24,8 +25,11 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.eclipse.che.ide.api.command.CommandGoal;
 import org.eclipse.che.ide.api.resources.Project;
+import org.eclipse.che.ide.ui.listbox.CustomComboBox;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,6 +43,9 @@ public class InfoPageViewImpl extends Composite implements InfoPageView {
 
     @UiField
     TextBox commandName;
+
+    @UiField
+    CustomComboBox goal;
 
     @UiField
     CheckBox workspace;
@@ -59,8 +66,17 @@ public class InfoPageViewImpl extends Composite implements InfoPageView {
     }
 
     @Override
-    public String getCommandName() {
-        return commandName.getValue();
+    public void setAvailableGoals(List<CommandGoal> goals) {
+        goal.clear();
+
+        for (CommandGoal g : goals) {
+            goal.addItem(g.getDisplayName());
+        }
+    }
+
+    @Override
+    public void setGoal(String goal) {
+        this.goal.setValue(goal);
     }
 
     @Override
@@ -104,7 +120,17 @@ public class InfoPageViewImpl extends Composite implements InfoPageView {
 
     @UiHandler({"commandName"})
     void onCommandNameChanged(KeyUpEvent event) {
-        delegate.onNameChanged(getCommandName());
+        delegate.onNameChanged(commandName.getValue());
+    }
+
+    @UiHandler({"goal"})
+    void onPortKeyUp(KeyUpEvent event) {
+        delegate.onGoalChanged(goal.getValue());
+    }
+
+    @UiHandler({"goal"})
+    void onPortChanged(ChangeEvent event) {
+        delegate.onGoalChanged(goal.getValue());
     }
 
     @UiHandler({"workspace"})

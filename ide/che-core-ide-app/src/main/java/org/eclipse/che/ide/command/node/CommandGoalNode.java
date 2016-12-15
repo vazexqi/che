@@ -8,6 +8,7 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
+
 package org.eclipse.che.ide.command.node;
 
 import com.google.inject.Inject;
@@ -15,41 +16,38 @@ import com.google.inject.assistedinject.Assisted;
 
 import org.eclipse.che.api.promises.client.Promise;
 import org.eclipse.che.api.promises.client.PromiseProvider;
-import org.eclipse.che.ide.api.command.CommandType;
-import org.eclipse.che.ide.api.command.CommandTypeRegistry;
 import org.eclipse.che.ide.api.data.tree.Node;
-import org.eclipse.che.ide.api.icon.Icon;
 import org.eclipse.che.ide.api.icon.IconRegistry;
+import org.eclipse.che.ide.api.command.CommandGoal;
 import org.eclipse.che.ide.project.node.SyntheticNode;
 import org.eclipse.che.ide.ui.smartTree.presentation.NodePresentation;
-import org.vectomatic.dom.svg.ui.SVGImage;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Tree node that represents {@link CommandType}.
+ * Tree node that represents {@link CommandGoal}.
  *
  * @author Artem Zatsarynnyi
  */
-public class CommandTypeNode extends SyntheticNode<CommandType> {
+public class CommandGoalNode extends SyntheticNode<CommandGoal> {
 
     private final List<? extends AbstractCommandNode> commands;
     private final PromiseProvider                     promiseProvider;
-    private final CommandTypeRegistry                 commandTypeRegistry;
+//    private final CommandTypeRegistry                 commandTypeRegistry;
     private final IconRegistry                        iconRegistry;
 
     @Inject
-    public CommandTypeNode(@Assisted CommandType data,
+    public CommandGoalNode(@Assisted CommandGoal data,
                            @Assisted List<? extends AbstractCommandNode> commands,
                            PromiseProvider promiseProvider,
-                           CommandTypeRegistry commandTypeRegistry,
+//                           CommandTypeRegistry commandTypeRegistry,
                            IconRegistry iconRegistry) {
         super(data, null);
 
         this.commands = commands;
         this.promiseProvider = promiseProvider;
-        this.commandTypeRegistry = commandTypeRegistry;
+//        this.commandTypeRegistry = commandTypeRegistry;
         this.iconRegistry = iconRegistry;
     }
 
@@ -58,21 +56,22 @@ public class CommandTypeNode extends SyntheticNode<CommandType> {
         presentation.setPresentableText(getName().toUpperCase() + " (" + commands.size() + ")");
         presentation.setPresentableTextCss("font-weight: bold;");
 
+        // TODO
         // set icon provided by command type
-        final String commandTypeId = getData().getId();
-        final CommandType commandType = commandTypeRegistry.getCommandTypeById(commandTypeId);
-
-        if (commandType != null) {
-            final Icon icon = iconRegistry.getIconIfExist(commandTypeId + ".commands.category.icon");
-
-            if (icon != null) {
-                final SVGImage svgImage = icon.getSVGImage();
-
-                if (svgImage != null) {
-                    presentation.setPresentableIcon(icon.getSVGResource());
-                }
-            }
-        }
+//        final String commandTypeId = getData().getId();
+//        final CommandType commandType = commandTypeRegistry.getCommandTypeById(commandTypeId);
+//
+//        if (commandType != null) {
+//            final Icon icon = iconRegistry.getIconIfExist(commandTypeId + ".commands.category.icon");
+//
+//            if (icon != null) {
+//                final SVGImage svgImage = icon.getSVGImage();
+//
+//                if (svgImage != null) {
+//                    presentation.setPresentableIcon(icon.getSVGResource());
+//                }
+//            }
+//        }
     }
 
     @Override

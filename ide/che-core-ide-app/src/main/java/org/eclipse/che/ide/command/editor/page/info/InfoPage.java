@@ -14,6 +14,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 
 import org.eclipse.che.ide.api.app.AppContext;
+import org.eclipse.che.ide.api.command.CommandGoalRegistry;
 import org.eclipse.che.ide.api.command.ContextualCommand.ApplicableContext;
 import org.eclipse.che.ide.api.resources.Project;
 import org.eclipse.che.ide.command.editor.page.AbstractCommandEditorPage;
@@ -23,6 +24,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_GOAL_ATTRIBUTE_NAME;
 
 /**
  * {@link CommandEditorPage} which allows to edit basic command's information, like:
@@ -35,11 +38,13 @@ import java.util.Map;
  */
 public class InfoPage extends AbstractCommandEditorPage implements InfoPageView.ActionDelegate {
 
-    private final InfoPageView view;
-    private final AppContext   appContext;
+    private final InfoPageView        view;
+    private final AppContext          appContext;
+    private final CommandGoalRegistry commandGoalRegistry;
 
     private final Map<Project, Boolean> projectsState;
 
+    private String       goalInitial;
     // initial value of the command's name
     private String       commandNameInitial;
     // initial value of the workspace flag
@@ -48,11 +53,12 @@ public class InfoPage extends AbstractCommandEditorPage implements InfoPageView.
     private List<String> applicableProjectsInitial;
 
     @Inject
-    public InfoPage(InfoPageView view, AppContext appContext) {
+    public InfoPage(InfoPageView view, AppContext appContext, CommandGoalRegistry commandGoalRegistry) {
         super("Info", "General command info");
 
         this.view = view;
         this.appContext = appContext;
+        this.commandGoalRegistry = commandGoalRegistry;
 
         projectsState = new HashMap<>();
 
@@ -66,12 +72,20 @@ public class InfoPage extends AbstractCommandEditorPage implements InfoPageView.
 
     @Override
     protected void initialize() {
+        String goal = editedCommand.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
+        if (goal == null) {
+            goal = "";
+        }
+
         final ApplicableContext context = editedCommand.getApplicableContext();
 
+        goalInitial = goal;
         commandNameInitial = editedCommand.getName();
         workspaceInitial = context.isWorkspaceApplicable();
         applicableProjectsInitial = new ArrayList<>(context.getApplicableProjects());
 
+        view.setAvailableGoals(commandGoalRegistry.getCommandGoals());
+        view.setGoal(goal);
         view.setCommandName(editedCommand.getName());
         view.setWorkspace(editedCommand.getApplicableContext().isWorkspaceApplicable());
 
@@ -99,11 +113,24 @@ public class InfoPage extends AbstractCommandEditorPage implements InfoPageView.
             return false;
         }
 
+        String goal = editedCommand.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
+        if (goal == null) {
+            goal = "";
+        }
+
         final ApplicableContext applicableContext = editedCommand.getApplicableContext();
 
-        return !(commandNameInitial.equals(editedCommand.getName()) &&
+        return !(goalInitial.equals(goal) &&
+                 commandNameInitial.equals(editedCommand.getName()) &&
                  workspaceInitial == applicableContext.isWorkspaceApplicable() &&
                  applicableProjectsInitial.equals(applicableContext.getApplicableProjects()));
+    }
+
+    @Override
+    public void onGoalChanged(String goal) {
+        editedCommand.getAttributes().put(COMMAND_GOAL_ATTRIBUTE_NAME, goal);
+
+        notifyDirtyStateChanged();
     }
 
     @Override

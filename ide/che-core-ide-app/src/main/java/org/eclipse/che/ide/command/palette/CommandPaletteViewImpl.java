@@ -20,10 +20,11 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.eclipse.che.ide.api.command.CommandType;
-import org.eclipse.che.ide.api.command.CommandTypeRegistry;
+import org.eclipse.che.ide.api.command.CommandGoal;
+import org.eclipse.che.ide.api.command.CommandGoalRegistry;
 import org.eclipse.che.ide.api.command.ContextualCommand;
-import org.eclipse.che.ide.command.node.CommandTypeNode;
+import org.eclipse.che.ide.command.goal.CommonGoal;
+import org.eclipse.che.ide.command.node.CommandGoalNode;
 import org.eclipse.che.ide.command.node.ExecutableCommandNode;
 import org.eclipse.che.ide.command.node.NodeFactory;
 import org.eclipse.che.ide.ui.smartTree.NodeLoader;
@@ -36,6 +37,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_GOAL_ATTRIBUTE_NAME;
+import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_PREVIEW_URL_ATTRIBUTE_NAME;
+
 /**
  * Implementation of {@link CommandPaletteView}.
  *
@@ -46,7 +50,7 @@ public class CommandPaletteViewImpl extends Window implements CommandPaletteView
 
     private static final CommandsPaletteViewImplUiBinder UI_BINDER = GWT.create(CommandsPaletteViewImplUiBinder.class);
 
-    private final CommandTypeRegistry commandTypeRegistry;
+    private final CommandGoalRegistry commandGoalRegistry;
     private final NodeFactory         nodeFactory;
 
     @UiField
@@ -58,8 +62,8 @@ public class CommandPaletteViewImpl extends Window implements CommandPaletteView
     private ActionDelegate delegate;
 
     @Inject
-    public CommandPaletteViewImpl(CommandTypeRegistry commandTypeRegistry, NodeFactory nodeFactory) {
-        this.commandTypeRegistry = commandTypeRegistry;
+    public CommandPaletteViewImpl(CommandGoalRegistry commandGoalRegistry, NodeFactory nodeFactory) {
+        this.commandGoalRegistry = commandGoalRegistry;
         this.nodeFactory = nodeFactory;
 
         tree = new Tree(new NodeStorage(), new NodeLoader());
@@ -90,27 +94,33 @@ public class CommandPaletteViewImpl extends Window implements CommandPaletteView
 
     @Override
     public void setCommands(List<ContextualCommand> commands) {
-        Map<CommandType, List<ContextualCommand>> commandsByType = new HashMap<>();
+        final Map<CommandGoal, List<ContextualCommand>> commandsByGoal = new HashMap<>();
 
         for (ContextualCommand command : commands) {
-            final CommandType commandType = commandTypeRegistry.getCommandTypeById(command.getType());
-            List<ContextualCommand> commandsOfType = commandsByType.get(commandType);
+            String goal = command.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
+            if (goal == null) {
+                goal = commandGoalRegistry.getCommandGoalById("common").getId();
+            }
+
+            final CommandGoal commandGoal = commandGoalRegistry.getCommandGoalById(goal);
+            List<ContextualCommand> commandsOfType = commandsByGoal.get(commandGoal);
 
             if (commandsOfType == null) {
                 commandsOfType = new ArrayList<>();
-                commandsByType.put(commandType, commandsOfType);
+                commandsByGoal.put(commandGoal, commandsOfType);
             }
 
             commandsOfType.add(command);
         }
 
-        renderCommands(commandsByType);
+        renderCommands(commandsByGoal);
     }
 
-    private void renderCommands(Map<CommandType, List<ContextualCommand>> commands) {
+    /** Render commands grouped by goals. */
+    private void renderCommands(Map<CommandGoal, List<ContextualCommand>> commands) {
         tree.getNodeStorage().clear();
 
-        for (Map.Entry<CommandType, List<ContextualCommand>> entry : commands.entrySet()) {
+        for (Map.Entry<CommandGoal, List<ContextualCommand>> entry : commands.entrySet()) {
             List<ExecutableCommandNode> commandNodes = new ArrayList<>(entry.getValue().size());
             for (final ContextualCommand command : entry.getValue()) {
                 commandNodes.add(nodeFactory.newExecutableCommandNode(command, new ExecutableCommandNode.ActionDelegate() {
@@ -121,8 +131,8 @@ public class CommandPaletteViewImpl extends Window implements CommandPaletteView
                 }));
             }
 
-            final CommandTypeNode commandTypeNode = nodeFactory.newCommandTypeNode(entry.getKey(), commandNodes);
-            tree.getNodeStorage().add(commandTypeNode);
+            final CommandGoalNode commandGoalNode = nodeFactory.newCommandGoalNode(entry.getKey(), commandNodes);
+            tree.getNodeStorage().add(commandGoalNode);
         }
 
         tree.expandAll();

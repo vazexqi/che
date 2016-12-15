@@ -9,7 +9,7 @@
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
 
-package org.eclipse.che.ide.machine.chooser;
+package org.eclipse.che.ide.command.explorer;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
@@ -28,36 +28,36 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
-import org.eclipse.che.api.core.model.machine.Machine;
+import org.eclipse.che.ide.api.command.CommandType;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Implementation of {@link MachineChooserView} which pops up list of the machines.
- * User can select machine with Enter key or cancel selection with Esc key.
+ * Implementation of {@link CommandTypeChooserView} which which pops up list of the command types.
+ * User can select command type with Enter key or cancel selection with Esc key.
  *
  * @author Artem Zatsarynnyi
  */
-public class MachineChooserViewImpl extends PopupPanel implements MachineChooserView {
+public class CommandTypeChooserViewImpl extends PopupPanel implements CommandTypeChooserView {
 
-    private static final MachineChooserViewImplUiBinder UI_BINDER = GWT.create(MachineChooserViewImplUiBinder.class);
+    private static final CommandTypeChooserViewImplUiBinder UI_BINDER = GWT.create(CommandTypeChooserViewImplUiBinder.class);
 
-    /** Map that contains all shown machines. */
-    private final Map<String, Machine> machinesById;
+    /** Map that contains all shown command types. */
+    private final Map<String, CommandType> commandTypesById;
 
     @UiField
     DockLayoutPanel layoutPanel;
 
     @UiField
-    ListBox machinesList;
+    ListBox typesList;
 
     private ActionDelegate delegate;
 
     @Inject
-    public MachineChooserViewImpl() {
-        machinesById = new HashMap<>();
+    public CommandTypeChooserViewImpl() {
+        commandTypesById = new HashMap<>();
 
         setWidget(UI_BINDER.createAndBindUi(this));
 
@@ -81,41 +81,41 @@ public class MachineChooserViewImpl extends PopupPanel implements MachineChooser
             }
         });
 
-        machinesList.addDoubleClickHandler(new DoubleClickHandler() {
+        typesList.addDoubleClickHandler(new DoubleClickHandler() {
             @Override
             public void onDoubleClick(DoubleClickEvent event) {
-                final String selectedMachineId = machinesList.getSelectedValue();
+                final String selectedTypeId = typesList.getSelectedValue();
 
-                if (selectedMachineId != null) {
-                    final Machine selectedMachine = machinesById.get(selectedMachineId);
+                if (selectedTypeId != null) {
+                    final CommandType selectedCommandType = commandTypesById.get(selectedTypeId);
 
-                    if (selectedMachine != null) {
-                        delegate.onMachineSelected(selectedMachine);
+                    if (selectedCommandType != null) {
+                        delegate.onSelected(selectedCommandType);
                     }
                 }
             }
         });
 
-        machinesList.addKeyPressHandler(new KeyPressHandler() {
+        typesList.addKeyPressHandler(new KeyPressHandler() {
             @Override
             public void onKeyPress(KeyPressEvent event) {
                 final int keyCode = event.getNativeEvent().getKeyCode();
 
                 if (KeyCodes.KEY_ENTER == keyCode || KeyCodes.KEY_MAC_ENTER == keyCode) {
-                    final String selectedMachineId = machinesList.getSelectedValue();
+                    final String selectedTypeId = typesList.getSelectedValue();
 
-                    if (selectedMachineId != null) {
-                        final Machine selectedMachine = machinesById.get(selectedMachineId);
+                    if (selectedTypeId != null) {
+                        final CommandType selectedCommandType = commandTypesById.get(selectedTypeId);
 
-                        if (selectedMachine != null) {
-                            delegate.onMachineSelected(selectedMachine);
+                        if (selectedCommandType != null) {
+                            delegate.onSelected(selectedCommandType);
                         }
                     }
                 }
             }
         });
 
-        machinesList.addKeyDownHandler(new KeyDownHandler() {
+        typesList.addKeyDownHandler(new KeyDownHandler() {
             @Override
             public void onKeyDown(KeyDownEvent event) {
                 if (KeyCodes.KEY_ESCAPE == event.getNativeKeyCode()) {
@@ -131,12 +131,12 @@ public class MachineChooserViewImpl extends PopupPanel implements MachineChooser
     }
 
     @Override
-    public void show() {
+    public void show(int left, int top) {
+        setPopupPosition(left, top);
+
         super.show();
 
-        center();
-
-        machinesList.setFocus(true);
+        typesList.setFocus(true);
     }
 
     @Override
@@ -145,27 +145,27 @@ public class MachineChooserViewImpl extends PopupPanel implements MachineChooser
     }
 
     @Override
-    public void setMachines(List<? extends Machine> machines) {
-        machinesList.clear();
-        machinesById.clear();
+    public void setTypes(List<CommandType> commandTypes) {
+        typesList.clear();
+        commandTypesById.clear();
 
-        for (Machine machine : machines) {
-            machinesById.put(machine.getId(), machine);
+        for (CommandType commandType : commandTypes) {
+            commandTypesById.put(commandType.getId(), commandType);
 
-            machinesList.addItem(machine.getConfig().getName(), machine.getId());
+            typesList.addItem(commandType.getDisplayName(), commandType.getId());
         }
 
-        machinesList.setVisibleItemCount(machines.size());
-        machinesList.setSelectedIndex(0);
+        typesList.setVisibleItemCount(commandTypes.size());
+        typesList.setSelectedIndex(0);
 
         // set height of the each row in the list to 15 px
-        final int listHeight = 15 * machines.size();
-        machinesList.setHeight(listHeight + "px");
+        final int listHeight = 15 * commandTypes.size();
+        typesList.setHeight(listHeight + "px");
 
         // set height of the entire panel
-        layoutPanel.setHeight(20 + listHeight + "px");
+        layoutPanel.setHeight(listHeight + "px");
     }
 
-    interface MachineChooserViewImplUiBinder extends UiBinder<DockLayoutPanel, MachineChooserViewImpl> {
+    interface CommandTypeChooserViewImplUiBinder extends UiBinder<DockLayoutPanel, CommandTypeChooserViewImpl> {
     }
 }

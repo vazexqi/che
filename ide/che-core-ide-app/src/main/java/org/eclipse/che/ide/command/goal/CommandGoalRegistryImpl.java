@@ -8,14 +8,15 @@
  * Contributors:
  *   Codenvy, S.A. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.ide.command;
+
+package org.eclipse.che.ide.command.goal;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.commons.annotation.Nullable;
-import org.eclipse.che.ide.api.command.CommandType;
-import org.eclipse.che.ide.api.command.CommandTypeRegistry;
+import org.eclipse.che.ide.api.command.CommandGoal;
+import org.eclipse.che.ide.api.command.CommandGoalRegistry;
 import org.eclipse.che.ide.util.loging.Log;
 
 import java.util.ArrayList;
@@ -27,40 +28,40 @@ import java.util.Set;
 import static java.util.Collections.unmodifiableList;
 
 /**
- * Implementation of {@link CommandTypeRegistry}.
+ * Implementation of {@link CommandGoalRegistry}.
  *
  * @author Artem Zatsarynnyi
  */
 @Singleton
-public class CommandTypeRegistryImpl implements CommandTypeRegistry {
+public class CommandGoalRegistryImpl implements CommandGoalRegistry {
 
-    private final Map<String, CommandType> commandTypes;
+    private final Map<String, CommandGoal> commandGaols;
 
-    public CommandTypeRegistryImpl() {
-        this.commandTypes = new HashMap<>();
+    public CommandGoalRegistryImpl() {
+        this.commandGaols = new HashMap<>();
     }
 
     @Inject(optional = true)
-    private void register(Set<CommandType> commandTypes) {
-        for (CommandType type : commandTypes) {
+    private void register(Set<CommandGoal> commandGoals) {
+        for (CommandGoal type : commandGoals) {
             final String id = type.getId();
 
-            if (this.commandTypes.containsKey(id)) {
-                Log.warn(getClass(), "Command type with ID " + id + " is already registered.");
+            if (this.commandGaols.containsKey(id)) {
+                Log.warn(getClass(), "Command goal with ID " + id + " is already registered.");
             } else {
-                this.commandTypes.put(id, type);
+                this.commandGaols.put(id, type);
             }
         }
     }
 
     @Nullable
     @Override
-    public CommandType getCommandTypeById(String id) {
-        return commandTypes.get(id);
+    public CommandGoal getCommandGoalById(String id) {
+        return commandGaols.get(id);
     }
 
     @Override
-    public List<CommandType> getCommandTypes() {
-        return unmodifiableList(new ArrayList<>(commandTypes.values()));
+    public List<CommandGoal> getCommandGoals() {
+        return unmodifiableList(new ArrayList<>(commandGaols.values()));
     }
 }

@@ -49,6 +49,7 @@ public final class Constants {
     public static final String WS_AGENT_PROCESS_NAME = "CheWsAgent";
 
     public static final String COMMAND_PREVIEW_URL_ATTRIBUTE_NAME = "previewUrl";
+    public static final String COMMAND_GOAL_ATTRIBUTE_NAME        = "goal";
 
     private Constants() {
     }

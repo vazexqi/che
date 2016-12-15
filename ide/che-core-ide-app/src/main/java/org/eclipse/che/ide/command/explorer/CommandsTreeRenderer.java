@@ -18,7 +18,7 @@ import com.google.gwt.user.client.EventListener;
 
 import org.eclipse.che.ide.api.data.tree.Node;
 import org.eclipse.che.ide.command.node.CommandFileNode;
-import org.eclipse.che.ide.command.node.CommandTypeNode;
+import org.eclipse.che.ide.command.node.CommandGoalNode;
 import org.eclipse.che.ide.ui.smartTree.Tree;
 import org.eclipse.che.ide.ui.smartTree.TreeStyles;
 import org.eclipse.che.ide.ui.smartTree.presentation.DefaultPresentationRenderer;
@@ -53,7 +53,8 @@ class CommandsTreeRenderer extends DefaultPresentationRenderer<Node> {
 
             nodeContainerElement.addClassName(resources.commandsExplorerCss().categorySubElementHeader());
 
-            final SpanElement removeCommandButton = createButton(resources.removeCommandButton(), new EventListener() {
+            final SpanElement removeCommandButton = createButton(resources.removeCommandButton());
+            Event.setEventListener(removeCommandButton, new EventListener() {
                 @Override
                 public void onBrowserEvent(Event event) {
                     if (ONCLICK == event.getTypeInt()) {
@@ -63,7 +64,8 @@ class CommandsTreeRenderer extends DefaultPresentationRenderer<Node> {
                 }
             });
 
-            final SpanElement duplicateCommandButton = createButton(resources.duplicateCommandButton(), new EventListener() {
+            final SpanElement duplicateCommandButton = createButton(resources.duplicateCommandButton());
+            Event.setEventListener(duplicateCommandButton, new EventListener() {
                 @Override
                 public void onBrowserEvent(Event event) {
                     if (ONCLICK == event.getTypeInt()) {
@@ -82,16 +84,17 @@ class CommandsTreeRenderer extends DefaultPresentationRenderer<Node> {
             // add additional buttons to node container
             nodeContainerElement.appendChild(buttonsPanel);
 
-        } else if (node instanceof CommandTypeNode) {
+        } else if (node instanceof CommandGoalNode) {
 
             nodeContainerElement.addClassName(resources.commandsExplorerCss().categoryHeader());
 
-            final SpanElement addCommandButton = createButton(resources.addCommandButton(), new EventListener() {
+            final SpanElement addCommandButton = createButton(resources.addCommandButton());
+            Event.setEventListener(addCommandButton, new EventListener() {
                 @Override
                 public void onBrowserEvent(Event event) {
                     if (ONCLICK == event.getTypeInt()) {
                         event.stopPropagation();
-                        delegate.onCommandAdd();
+                        delegate.onCommandAdd(addCommandButton.getAbsoluteLeft(), addCommandButton.getAbsoluteTop());
                     }
                 }
             });
@@ -102,12 +105,11 @@ class CommandsTreeRenderer extends DefaultPresentationRenderer<Node> {
         return element;
     }
 
-    private SpanElement createButton(SVGResource icon, EventListener eventListener) {
+    private SpanElement createButton(SVGResource icon) {
         final SpanElement button = Document.get().createSpanElement();
         button.appendChild(icon.getSvg().getElement());
 
         Event.sinkEvents(button, ONCLICK);
-        Event.setEventListener(button, eventListener);
 
         return button;
     }
