@@ -20,6 +20,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import org.eclipse.che.api.core.model.machine.Machine;
 import org.eclipse.che.api.core.model.workspace.WorkspaceRuntime;
+import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.core.rest.shared.dto.LinkParameter;
 import org.eclipse.che.api.machine.shared.Constants;
@@ -401,7 +402,9 @@ public class WorkspaceEventsHandler {
                     break;
 
                 case RUNNING:
-                    onWorkspaceStarted(workspaceId);
+                    if (statusEvent.getPrevStatus() == WorkspaceStatus.STARTING) {
+                        onWorkspaceStarted(workspaceId);
+                    }
                     break;
 
                 case ERROR:

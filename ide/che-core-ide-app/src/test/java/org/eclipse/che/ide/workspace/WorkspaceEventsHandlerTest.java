@@ -14,6 +14,7 @@ import com.google.gwt.core.client.Callback;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.core.rest.shared.dto.LinkParameter;
 import org.eclipse.che.api.machine.shared.dto.MachineConfigDto;
@@ -275,6 +276,7 @@ public class WorkspaceEventsHandlerTest {
     @Test
     public void onWorkspaceStartedTest() throws Exception {
         when(workspaceStatusEvent.getEventType()).thenReturn(RUNNING);
+        when(workspaceStatusEvent.getPrevStatus()).thenReturn(WorkspaceStatus.STARTING);
 
         workspaceEventsHandler.trackWorkspaceEvents(workspace, callback);
         workspaceEventsHandler.workspaceStatusSubscriptionHandler.onMessageReceived(workspaceStatusEvent);
