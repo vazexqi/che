@@ -110,7 +110,7 @@ public class ContextualCommandActionManager implements Component,
     private void addAction(ContextualCommand command) {
         final ContextualCommandAction action = contextualCommandActionFactory.create(command);
 
-        actionManager.registerAction(command.getName(), action);
+        actionManager.registerAction("command_" + command.getName(), action);
         command2Action.put(command.getName(), action);
 
         getActionGroupForCommand(command).add(action);
@@ -131,7 +131,7 @@ public class ContextualCommandActionManager implements Component,
         if (commandGoalPopUpGroup == null) {
             commandGoalPopUpGroup = commandGoalPopUpGroupFactory.create(goalId);
 
-            actionManager.registerAction(goalId, commandGoalPopUpGroup);
+            actionManager.registerAction("goal_" + goalId, commandGoalPopUpGroup);
             commandGoalPopUpGroups.put(goalId, commandGoalPopUpGroup);
 
             commandsActionGroup.add(commandGoalPopUpGroup);
