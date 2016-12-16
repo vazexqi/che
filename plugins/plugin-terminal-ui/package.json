@@ -10,12 +10,6 @@
   "repository": "https://github.com/sourcelair/xterm.js",
   "license": "MIT",
   "files": [
-    "dist/*.css",
-    "dist/**/*.css",
-    "dist/*.js",
-    "dist/*.js.map",
-    "dist/**/*.js",
-    "dist/**/*.js.map",
     "lib/*.css",
     "lib/**/*.css",
     "lib/*.js",
@@ -52,11 +46,7 @@
     "typescript": "^2.0.3"
   },
   "scripts": {
-    "start": "nodemon --watch src --watch addons --watch demo --exec bash -c './bin/build && node demo/app'",
-    "lint": "tslint src/**/*.ts",
     "test": "mocha --recursive ./lib",
-    "build:docs": "jsdoc -c jsdoc.json",
-    "build": "./bin/build",
-    "prepublish": "tsc"
+    "build": "./bin/build"
   }
 }
