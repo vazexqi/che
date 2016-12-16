@@ -46,6 +46,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -83,6 +84,7 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 /**
@@ -354,6 +356,12 @@ public class WorkspaceRuntimesTest {
                              any()))
                 .thenReturn(singletonList(createMachine(false)));
 
+        when(envEngine.start(anyString(),
+                             anyString(),
+                             anyObject(),
+                             anyBoolean(),
+                             anyObject())).thenThrow(new ServerException("test"));
+
         try {
             // when
             runtimes.start(workspace,
@@ -362,10 +370,13 @@ public class WorkspaceRuntimesTest {
 
         } catch (Exception e) {
             // then
-            verify(eventService).publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
-                                                   .withWorkspaceId(workspace.getId())
-                                                   .withStatus(WorkspaceStatus.STOPPED)
-                                                   .withPrevStatus(WorkspaceStatus.STARTING));
+            verify(eventService, times(2)).publish(eventCaptor.capture());
+
+            assertTrue(eventCaptor.getAllValues().contains(DtoFactory.newDto(WorkspaceStatusEvent.class)
+                                                                     .withWorkspaceId(workspace.getId())
+                                                                     .withStatus(WorkspaceStatus.STOPPED)
+                                                                     .withPrevStatus(WorkspaceStatus.STARTING)
+                                                                     .withError("Start of environment default-env failed. Error: test")));
         }
     }
 
@@ -413,17 +424,19 @@ public class WorkspaceRuntimesTest {
                        workspace.getConfig().getDefaultEnv(),
                        false);
 
-        try {
-            // when
-            runtimes.stop(workspace.getId());
-        } catch (Exception e) {
-            // then
-            verify(eventService).publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
-                                                   .withWorkspaceId(workspace.getId())
-                                                   .withStatus(WorkspaceStatus.STOPPED)
-                                                   .withPrevStatus(WorkspaceStatus.STOPPING)
-                                                   .withError("Test error"));
-        }
+        doThrow(new ServerException("error")).when(envEngine).stop(workspace.getId());
+
+        // when
+        runtimes.stop(workspace.getId());
+
+        // then
+        verify(eventService, times(4)).publish(eventCaptor.capture());
+
+        assertTrue(eventCaptor.getAllValues().contains(DtoFactory.newDto(WorkspaceStatusEvent.class)
+                                                                 .withWorkspaceId(workspace.getId())
+                                                                 .withStatus(WorkspaceStatus.STOPPED)
+                                                                 .withPrevStatus(WorkspaceStatus.STOPPING)
+                                                                 .withError("error")));
     }
 
     @Test

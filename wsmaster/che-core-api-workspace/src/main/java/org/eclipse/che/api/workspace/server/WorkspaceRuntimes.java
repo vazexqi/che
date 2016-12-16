@@ -687,7 +687,7 @@ public class WorkspaceRuntimes {
             }
             eventsService.publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                             .withWorkspaceId(workspaceId)
-                                            .withPrevStatus(WorkspaceStatus.STOPPED)
+                                            .withStatus(WorkspaceStatus.STOPPED)
                                             .withPrevStatus(WorkspaceStatus.STARTING)
                                             .withError(environmentStartError));
 
