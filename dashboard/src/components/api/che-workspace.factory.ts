@@ -40,7 +40,6 @@ export class CheWorkspace {
   $resource: ng.resource.IResourceService;
   $q: ng.IQService;
   listeners: Array<any>;
-  workspaceStatuses: Array<string>;
   workspaces: Array<che.IWorkspace>;
   subscribedWorkspacesIds: Array<string>;
   workspaceAgents: Map<string, CheWorkspaceAgent>;
@@ -55,8 +54,6 @@ export class CheWorkspace {
    * @ngInject for Dependency injection
    */
   constructor($resource: ng.resource.IResourceService, $q: ng.IQService, cheWebsocket: CheWebsocket, lodash: any, cheEnvironmentRegistry: CheEnvironmentRegistry, $log: ng.ILogService) {
-    this.workspaceStatuses = ['RUNNING', 'STOPPED', 'PAUSED', 'STARTING', 'STOPPING', 'ERROR'];
-
     // keep resource
     this.$q = $q;
     this.$resource = $resource;
@@ -409,7 +406,7 @@ export class CheWorkspace {
    * @param workspaceId {string}
    * @returns {ng.IPromise<any>} promise
    */
-  stopWorkspace(workspaceId: string): ng.IPromise<any> {
+  stopWorkspace(workspaceId: string, snapshot: boolean): ng.IPromise<any> {
     return this.remoteWorkspaceAPI.stopWorkspace({workspaceId: workspaceId}, {}).$promise;
   }
 
@@ -543,27 +540,18 @@ export class CheWorkspace {
       this.subscribedWorkspacesIds.push(workspaceId);
 
       bus.subscribe('workspace:' + workspaceId, (message: any) => {
+        let status = (message.status === 'STOPPED' && message.error) ? 'ERROR' : message.status;
+        this.getWorkspaceById(workspaceId).status = status;
 
-        // filter workspace events, which really indicate the status change:
-        if (this.workspaceStatuses.indexOf(message.eventType) >= 0) {
-          this.getWorkspaceById(workspaceId).status = message.eventType;
-        } else if (message.eventType === 'SNAPSHOT_CREATING') {
-          this.getWorkspaceById(workspaceId).status = 'SNAPSHOTTING';
-        } else if (message.eventType === 'SNAPSHOT_CREATED') {
-          // snapshot can be created for RUNNING workspace only. As far as snapshot creation is only the events, not the state,
-          // we introduced SNAPSHOT_CREATING status to be handled by UI, though it is fake one, and end of it is indicated by SNAPSHOT_CREATED.
-          this.getWorkspaceById(workspaceId).status = 'RUNNING';
-        }
-
-        if (!this.statusDefers[workspaceId] || !this.statusDefers[workspaceId][message.eventType]) {
+        if (!this.statusDefers[workspaceId] || !this.statusDefers[workspaceId][status]) {
           return;
         }
 
-        this.statusDefers[workspaceId][message.eventType].forEach((defer: any) => {
+        this.statusDefers[workspaceId][status].forEach((defer: any) => {
           defer.resolve(message);
         });
 
-        this.statusDefers[workspaceId][message.eventType].length = 0;
+        this.statusDefers[workspaceId][status].length = 0;
       });
     }
   }

@@ -464,7 +464,7 @@ export class CreateProjectController {
       this.listeningChannels.push(statusChannel);
       bus.subscribe(statusChannel, (message: any) => {
         message = this.getDisplayMachineLog(message);
-        if (message.eventType === 'DESTROYED' && message.workspaceId === workspace.id) {
+        if (message.status === 'DESTROYED' && message.workspaceId === workspace.id) {
           this.getCreationSteps()[this.getCurrentProgressStep()].hasError = true;
 
           // need to show the error
@@ -476,7 +476,7 @@ export class CreateProjectController {
                   .ok('OK')
           );
         }
-        if (message.eventType === 'ERROR' && message.workspaceId === workspace.id) {
+        if (message.status === 'STOPPED' && message.error && message.workspaceId === workspace.id) {
           this.getCreationSteps()[this.getCurrentProgressStep()].hasError = true;
           let errorMessage = 'Error when trying to start the workspace';
           if (message.error) {

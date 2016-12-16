@@ -159,7 +159,7 @@ class IdeSvc {
       this.listeningChannels.push(statusChannel);
       // for now, display log of status channel in case of errors
       bus.subscribe(statusChannel, (message: any) => {
-        if (message.eventType === 'DESTROYED' && message.workspaceId === data.id && !(this.$rootScope as any).showIDE) {
+        if (message.status === 'DESTROYED' && message.workspaceId === data.id && !(this.$rootScope as any).showIDE) {
           // need to show the error
           this.$mdDialog.show(
             this.$mdDialog.alert()
@@ -169,7 +169,7 @@ class IdeSvc {
               .ok('OK')
           );
         }
-        if (message.eventType === 'ERROR' && message.workspaceId === data.id) {
+        if (message.status === 'STOPPED' && message.error && message.workspaceId === data.id) {
           let errorMessage = 'Error when trying to start the workspace';
           if (message.error) {
             errorMessage += ': ' + message.error;
@@ -190,7 +190,7 @@ class IdeSvc {
 
       this.listeningChannels.push(agentChannel);
       bus.subscribe(agentChannel, (message: any) => {
-        if (message.eventType === 'ERROR' && message.workspaceId === data.id) {
+        if (message.status === 'STOPPED' && message.error && message.workspaceId === data.id) {
           // need to show the error
           this.$mdDialog.show(
             this.$mdDialog.alert()
