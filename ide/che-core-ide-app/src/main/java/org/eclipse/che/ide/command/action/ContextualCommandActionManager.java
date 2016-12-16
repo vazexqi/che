@@ -11,6 +11,7 @@
 
 package org.eclipse.che.ide.command.action;
 
+import com.google.common.base.Strings;
 import com.google.gwt.core.client.Callback;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -22,11 +23,13 @@ import org.eclipse.che.ide.api.command.ContextualCommand;
 import org.eclipse.che.ide.api.command.ContextualCommandManager;
 import org.eclipse.che.ide.api.command.ContextualCommandManager.CommandChangedListener;
 import org.eclipse.che.ide.api.command.ContextualCommandManager.CommandLoadedListener;
+import org.eclipse.che.ide.api.command.PredefinedCommandGoalRegistry;
 import org.eclipse.che.ide.api.component.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_GOAL_ATTRIBUTE_NAME;
 import static org.eclipse.che.ide.api.action.IdeActions.GROUP_CONSOLES_TREE_CONTEXT_MENU;
 import static org.eclipse.che.ide.api.action.IdeActions.GROUP_EDITOR_TAB_CONTEXT_MENU;
@@ -50,6 +53,7 @@ public class ContextualCommandActionManager implements Component,
     private final CommandsActionGroup            commandsActionGroup;
     private final CommandGoalPopUpGroupFactory   commandGoalPopUpGroupFactory;
     private final ContextualCommandActionFactory contextualCommandActionFactory;
+    private final PredefinedCommandGoalRegistry  predefinedCommandGoalRegistry;
 
     private final Map<String, Action>             command2Action;
     private final Map<String, DefaultActionGroup> commandGoalPopUpGroups;
@@ -59,12 +63,14 @@ public class ContextualCommandActionManager implements Component,
                                           ActionManager actionManager,
                                           CommandsActionGroup commandsActionGroup,
                                           CommandGoalPopUpGroupFactory commandGoalPopUpGroupFactory,
-                                          ContextualCommandActionFactory contextualCommandActionFactory) {
+                                          ContextualCommandActionFactory contextualCommandActionFactory,
+                                          PredefinedCommandGoalRegistry predefinedCommandGoalRegistry) {
         this.commandManager = commandManager;
         this.actionManager = actionManager;
         this.commandsActionGroup = commandsActionGroup;
         this.commandGoalPopUpGroupFactory = commandGoalPopUpGroupFactory;
         this.contextualCommandActionFactory = contextualCommandActionFactory;
+        this.predefinedCommandGoalRegistry = predefinedCommandGoalRegistry;
 
         command2Action = new HashMap<>();
         commandGoalPopUpGroups = new HashMap<>();
@@ -112,12 +118,12 @@ public class ContextualCommandActionManager implements Component,
 
     /**
      * Returns the action group which is appropriate for placing the action for executing the given command.
-     * If appropriate action group doesn't exist it will be created and added to right place.
+     * If appropriate action group doesn't exist it will be created and added to the right place.
      */
     private DefaultActionGroup getActionGroupForCommand(ContextualCommand command) {
         String goalId = command.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
-        if (goalId == null) {
-            goalId = "common";
+        if (isNullOrEmpty(goalId)) {
+            goalId = predefinedCommandGoalRegistry.getDefaultGoal().getId();
         }
 
         DefaultActionGroup commandGoalPopUpGroup = commandGoalPopUpGroups.get(goalId);

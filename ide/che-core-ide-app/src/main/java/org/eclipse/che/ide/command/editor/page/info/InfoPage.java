@@ -14,8 +14,8 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 
 import org.eclipse.che.ide.api.app.AppContext;
-import org.eclipse.che.ide.api.command.PredefinedCommandGoalRegistry;
 import org.eclipse.che.ide.api.command.ContextualCommand.ApplicableContext;
+import org.eclipse.che.ide.api.command.PredefinedCommandGoalRegistry;
 import org.eclipse.che.ide.api.resources.Project;
 import org.eclipse.che.ide.command.editor.page.AbstractCommandEditorPage;
 import org.eclipse.che.ide.command.editor.page.CommandEditorPage;
@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_GOAL_ATTRIBUTE_NAME;
 
 /**
@@ -74,20 +75,20 @@ public class InfoPage extends AbstractCommandEditorPage implements InfoPageView.
 
     @Override
     protected void initialize() {
-        String goal = editedCommand.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
-        if (goal == null) {
-            goal = "";
+        String goalId = editedCommand.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
+        if (isNullOrEmpty(goalId)) {
+            goalId = "";
         }
 
         final ApplicableContext context = editedCommand.getApplicableContext();
 
-        goalInitial = goal;
+        goalInitial = goalId;
         commandNameInitial = editedCommand.getName();
         workspaceInitial = context.isWorkspaceApplicable();
         applicableProjectsInitial = new ArrayList<>(context.getApplicableProjects());
 
         view.setAvailableGoals(predefinedCommandGoalRegistry.getAllGoals());
-        view.setGoal(goal);
+        view.setGoal(goalId);
         view.setCommandName(editedCommand.getName());
         view.setWorkspace(editedCommand.getApplicableContext().isWorkspaceApplicable());
 
@@ -115,22 +116,22 @@ public class InfoPage extends AbstractCommandEditorPage implements InfoPageView.
             return false;
         }
 
-        String goal = editedCommand.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
-        if (goal == null) {
-            goal = "";
+        String goalId = editedCommand.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
+        if (isNullOrEmpty(goalId)) {
+            goalId = "";
         }
 
         final ApplicableContext applicableContext = editedCommand.getApplicableContext();
 
-        return !(goalInitial.equals(goal) &&
+        return !(goalInitial.equals(goalId) &&
                  commandNameInitial.equals(editedCommand.getName()) &&
                  workspaceInitial == applicableContext.isWorkspaceApplicable() &&
                  applicableProjectsInitial.equals(applicableContext.getApplicableProjects()));
     }
 
     @Override
-    public void onGoalChanged(String goal) {
-        editedCommand.getAttributes().put(COMMAND_GOAL_ATTRIBUTE_NAME, goal);
+    public void onGoalChanged(String goalId) {
+        editedCommand.getAttributes().put(COMMAND_GOAL_ATTRIBUTE_NAME, goalId);
 
         notifyDirtyStateChanged();
     }

@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_GOAL_ATTRIBUTE_NAME;
 
 /**
@@ -99,7 +100,7 @@ public class CommandPaletteViewImpl extends Window implements CommandPaletteView
             final String goalId = command.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
 
             final CommandGoal commandGoal;
-            if (goalId == null) {
+            if (isNullOrEmpty(goalId)) {
                 commandGoal = predefinedCommandGoalRegistry.getDefaultGoal();
             } else {
                 commandGoal = predefinedCommandGoalRegistry.getGoalById(goalId)

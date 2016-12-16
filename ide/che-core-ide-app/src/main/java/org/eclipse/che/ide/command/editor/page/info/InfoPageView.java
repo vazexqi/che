@@ -46,10 +46,10 @@ public interface InfoPageView extends View<InfoPageView.ActionDelegate> {
         /**
          * Called when command goal has been changed.
          *
-         * @param goal
-         *         changed value of the command goal
+         * @param goalId
+         *         new value of the command goal
          */
-        void onGoalChanged(String goal);
+        void onGoalChanged(String goalId);
 
         /**
          * Called when command's name has been changed.

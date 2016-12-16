@@ -150,7 +150,7 @@ public class ContextualCommandManagerImpl implements ContextualCommandManager, W
     }
 
     @Override
-    public Promise<ContextualCommand> createCommand(String goal, String commandTypeId, ApplicableContext applicableContext) {
+    public Promise<ContextualCommand> createCommand(String goalId, String commandTypeId, ApplicableContext applicableContext) {
         final CommandType commandType = commandTypeRegistry.getCommandTypeById(commandTypeId);
 
         if (commandType == null) {
@@ -159,7 +159,7 @@ public class ContextualCommandManagerImpl implements ContextualCommandManager, W
 
         final Map<String, String> attributes = new HashMap<>(1);
         attributes.put(COMMAND_PREVIEW_URL_ATTRIBUTE_NAME, commandType.getPreviewUrlTemplate());
-        attributes.put(COMMAND_GOAL_ATTRIBUTE_NAME, goal);
+        attributes.put(COMMAND_GOAL_ATTRIBUTE_NAME, goalId);
 
         return createCommand(new ContextualCommand(getUniqueCommandName(commandTypeId, null),
                                                    commandType.getCommandLineTemplate(),
