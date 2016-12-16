@@ -14,7 +14,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 
 import org.eclipse.che.ide.api.app.AppContext;
-import org.eclipse.che.ide.api.command.CommandGoalRegistry;
+import org.eclipse.che.ide.api.command.PredefinedCommandGoalRegistry;
 import org.eclipse.che.ide.api.command.ContextualCommand.ApplicableContext;
 import org.eclipse.che.ide.api.resources.Project;
 import org.eclipse.che.ide.command.editor.page.AbstractCommandEditorPage;
@@ -38,9 +38,9 @@ import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_GOAL_ATTRIB
  */
 public class InfoPage extends AbstractCommandEditorPage implements InfoPageView.ActionDelegate {
 
-    private final InfoPageView        view;
-    private final AppContext          appContext;
-    private final CommandGoalRegistry commandGoalRegistry;
+    private final InfoPageView                  view;
+    private final AppContext                    appContext;
+    private final PredefinedCommandGoalRegistry predefinedCommandGoalRegistry;
 
     private final Map<Project, Boolean> projectsState;
 
@@ -53,12 +53,14 @@ public class InfoPage extends AbstractCommandEditorPage implements InfoPageView.
     private List<String> applicableProjectsInitial;
 
     @Inject
-    public InfoPage(InfoPageView view, AppContext appContext, CommandGoalRegistry commandGoalRegistry) {
+    public InfoPage(InfoPageView view,
+                    AppContext appContext,
+                    PredefinedCommandGoalRegistry predefinedCommandGoalRegistry) {
         super("Info", "General command info");
 
         this.view = view;
         this.appContext = appContext;
-        this.commandGoalRegistry = commandGoalRegistry;
+        this.predefinedCommandGoalRegistry = predefinedCommandGoalRegistry;
 
         projectsState = new HashMap<>();
 
@@ -84,7 +86,7 @@ public class InfoPage extends AbstractCommandEditorPage implements InfoPageView.
         workspaceInitial = context.isWorkspaceApplicable();
         applicableProjectsInitial = new ArrayList<>(context.getApplicableProjects());
 
-        view.setAvailableGoals(commandGoalRegistry.getCommandGoals());
+        view.setAvailableGoals(predefinedCommandGoalRegistry.getAllGoals());
         view.setGoal(goal);
         view.setCommandName(editedCommand.getName());
         view.setWorkspace(editedCommand.getApplicableContext().isWorkspaceApplicable());

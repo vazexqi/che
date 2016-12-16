@@ -24,11 +24,11 @@ import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.ide.DelayedTask;
 import org.eclipse.che.ide.api.command.BaseCommandGoal;
 import org.eclipse.che.ide.api.command.CommandGoal;
-import org.eclipse.che.ide.api.command.CommandGoalRegistry;
 import org.eclipse.che.ide.api.command.CommandType;
 import org.eclipse.che.ide.api.command.ContextualCommand;
 import org.eclipse.che.ide.api.command.ContextualCommand.ApplicableContext;
 import org.eclipse.che.ide.api.command.ContextualCommandManager;
+import org.eclipse.che.ide.api.command.PredefinedCommandGoalRegistry;
 import org.eclipse.che.ide.api.machine.events.WsAgentStateEvent;
 import org.eclipse.che.ide.api.machine.events.WsAgentStateHandler;
 import org.eclipse.che.ide.api.notification.NotificationManager;
@@ -59,13 +59,13 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
     private static final String TITLE   = "Commands";
     private static final String TOOLTIP = "Manage commands";
 
-    private final CommandsExplorerView      view;
-    private final CommandsExplorerResources resources;
-    private final WorkspaceAgent            workspaceAgent;
-    private final ContextualCommandManager  commandManager;
-    private final CommandGoalRegistry       commandGoalRegistry;
-    private final NotificationManager       notificationManager;
-    private final CommandTypeChooser        commandTypeChooser;
+    private final CommandsExplorerView          view;
+    private final CommandsExplorerResources     resources;
+    private final WorkspaceAgent                workspaceAgent;
+    private final ContextualCommandManager      commandManager;
+    private final PredefinedCommandGoalRegistry predefinedCommandGoalRegistry;
+    private final NotificationManager           notificationManager;
+    private final CommandTypeChooser            commandTypeChooser;
 
     /** {@link DelayedTask} for refreshing the view. */
     private DelayedTask refreshViewTask = new DelayedTask() {
@@ -81,14 +81,14 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
                                      WorkspaceAgent workspaceAgent,
                                      EventBus eventBus,
                                      ContextualCommandManager commandManager,
-                                     CommandGoalRegistry commandGoalRegistry,
+                                     PredefinedCommandGoalRegistry predefinedCommandGoalRegistry,
                                      NotificationManager notificationManager,
                                      CommandTypeChooser commandTypeChooser) {
         this.view = view;
         resources = commandsExplorerResources;
         this.workspaceAgent = workspaceAgent;
         this.commandManager = commandManager;
-        this.commandGoalRegistry = commandGoalRegistry;
+        this.predefinedCommandGoalRegistry = predefinedCommandGoalRegistry;
         this.notificationManager = notificationManager;
         this.commandTypeChooser = commandTypeChooser;
 
@@ -223,35 +223,31 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
     private void refreshView() {
         final Map<CommandGoal, List<ContextualCommand>> commandsByGoal = new HashMap<>();
 
-        // all registered command goals need to be shown in view
+        // all predefined command goals have to be shown in the view
         // so populate map by all registered command goals
-        for (CommandGoal goal : commandGoalRegistry.getCommandGoals()) {
+        for (CommandGoal goal : predefinedCommandGoalRegistry.getAllGoals()) {
             commandsByGoal.put(goal, new ArrayList<ContextualCommand>());
         }
 
         for (ContextualCommand command : commandManager.getCommands()) {
-            String goal = command.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
+            final String goalId = command.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
 
-            if (goal == null) {
-                // command doesn't have a goal
-                // so let's use common goal
-                goal = commandGoalRegistry.getCommandGoalById("common").getId();
+            final CommandGoal commandGoal;
+            if (goalId == null) {
+                commandGoal = predefinedCommandGoalRegistry.getDefaultGoal();
+            } else {
+                commandGoal = predefinedCommandGoalRegistry.getGoalById(goalId)
+                                                           .or(new BaseCommandGoal(goalId, goalId));
             }
 
-            CommandGoal commandGoal = commandGoalRegistry.getCommandGoalById(goal);
+            List<ContextualCommand> commandsOfGoal = commandsByGoal.get(commandGoal);
 
-            if (commandGoal == null) {
-                commandGoal = new BaseCommandGoal(goal, goal);
+            if (commandsOfGoal == null) {
+                commandsOfGoal = new ArrayList<>();
+                commandsByGoal.put(commandGoal, commandsOfGoal);
             }
 
-            List<ContextualCommand> commandsOfType = commandsByGoal.get(commandGoal);
-
-            if (commandsOfType == null) {
-                commandsOfType = new ArrayList<>();
-                commandsByGoal.put(commandGoal, commandsOfType);
-            }
-
-            commandsOfType.add(command);
+            commandsOfGoal.add(command);
         }
 
         view.setCommands(commandsByGoal);

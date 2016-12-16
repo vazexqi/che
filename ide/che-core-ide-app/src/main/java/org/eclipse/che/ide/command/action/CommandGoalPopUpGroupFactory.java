@@ -12,12 +12,12 @@
 package org.eclipse.che.ide.command.action;
 
 /**
- * Factory for creating {@link CommandTypePopUpGroup} instances.
+ * Factory for creating {@link CommandGoalPopUpGroup} instances.
  *
  * @author Artem Zatsarynnyi
  */
-public interface CommandTypePopUpGroupFactory {
+public interface CommandGoalPopUpGroupFactory {
 
-    /** Creates {@link CommandTypePopUpGroup} for the given {@code commandTypeId}. */
-    CommandTypePopUpGroup create(String commandTypeId);
+    /** Creates {@link CommandGoalPopUpGroup} for the given {@code commandGoalId}. */
+    CommandGoalPopUpGroup create(String commandGoalId);
 }

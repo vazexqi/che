@@ -20,14 +20,14 @@ import com.google.inject.name.Named;
 
 import org.eclipse.che.ide.Resources;
 import org.eclipse.che.ide.api.command.CommandGoal;
-import org.eclipse.che.ide.api.command.CommandGoalRegistry;
-import org.eclipse.che.ide.api.command.ContextualCommandManager;
 import org.eclipse.che.ide.api.command.CommandType;
 import org.eclipse.che.ide.api.command.CommandTypeRegistry;
+import org.eclipse.che.ide.api.command.ContextualCommandManager;
+import org.eclipse.che.ide.api.command.PredefinedCommandGoalRegistry;
 import org.eclipse.che.ide.api.component.Component;
 import org.eclipse.che.ide.api.component.WsAgentComponent;
 import org.eclipse.che.ide.api.filetypes.FileType;
-import org.eclipse.che.ide.command.action.CommandTypePopUpGroupFactory;
+import org.eclipse.che.ide.command.action.CommandGoalPopUpGroupFactory;
 import org.eclipse.che.ide.command.action.ContextualCommandActionFactory;
 import org.eclipse.che.ide.command.action.ContextualCommandActionManager;
 import org.eclipse.che.ide.command.explorer.CommandTypeChooserView;
@@ -35,9 +35,9 @@ import org.eclipse.che.ide.command.explorer.CommandTypeChooserViewImpl;
 import org.eclipse.che.ide.command.explorer.CommandsExplorerView;
 import org.eclipse.che.ide.command.explorer.CommandsExplorerViewImpl;
 import org.eclipse.che.ide.command.goal.BuildGoal;
-import org.eclipse.che.ide.command.goal.CommandGoalRegistryImpl;
 import org.eclipse.che.ide.command.goal.CommonGoal;
 import org.eclipse.che.ide.command.goal.DebugGoal;
+import org.eclipse.che.ide.command.goal.PredefinedCommandGoalRegistryImpl;
 import org.eclipse.che.ide.command.goal.RunGoal;
 import org.eclipse.che.ide.command.manager.ContextualCommandManagerImpl;
 import org.eclipse.che.ide.command.node.NodeFactory;
@@ -67,7 +67,7 @@ public class CommandApiModule extends AbstractGinModule {
         goalBinder.addBinding().to(DebugGoal.class);
 
         bind(CommandTypeRegistry.class).to(CommandTypeRegistryImpl.class).in(Singleton.class);
-        bind(CommandGoalRegistry.class).to(CommandGoalRegistryImpl.class).in(Singleton.class);
+        bind(PredefinedCommandGoalRegistry.class).to(PredefinedCommandGoalRegistryImpl.class).in(Singleton.class);
 
         bind(ContextualCommandManager.class).to(ContextualCommandManagerImpl.class).in(Singleton.class);
 
@@ -81,7 +81,7 @@ public class CommandApiModule extends AbstractGinModule {
                     .to(ContextualCommandManagerImpl.class);
 
         install(new GinFactoryModuleBuilder().build(ContextualCommandActionFactory.class));
-        install(new GinFactoryModuleBuilder().build(CommandTypePopUpGroupFactory.class));
+        install(new GinFactoryModuleBuilder().build(CommandGoalPopUpGroupFactory.class));
         install(new GinFactoryModuleBuilder().build(NodeFactory.class));
         install(new GinFactoryModuleBuilder().build(CommandProducerActionFactory.class));
 
@@ -95,5 +95,12 @@ public class CommandApiModule extends AbstractGinModule {
     @Named("CommandFileType")
     protected FileType provideCommandFileType(Resources resources) {
         return new FileType(resources.defaultImage(), FILE_TYPE_EXT);
+    }
+
+    @Provides
+    @Named("default")
+    @Singleton
+    protected CommandGoal provideDefaultGoal() {
+        return new CommonGoal();
     }
 }

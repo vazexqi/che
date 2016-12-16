@@ -16,40 +16,38 @@ import com.google.inject.assistedinject.Assisted;
 import org.eclipse.che.ide.api.action.ActionEvent;
 import org.eclipse.che.ide.api.action.ActionManager;
 import org.eclipse.che.ide.api.action.DefaultActionGroup;
-import org.eclipse.che.ide.api.command.CommandType;
-import org.eclipse.che.ide.api.command.CommandTypeRegistry;
+import org.eclipse.che.ide.api.command.CommandGoal;
+import org.eclipse.che.ide.api.command.PredefinedCommandGoalRegistry;
 import org.eclipse.che.ide.api.icon.Icon;
 import org.eclipse.che.ide.api.icon.IconRegistry;
 import org.vectomatic.dom.svg.ui.SVGImage;
 import org.vectomatic.dom.svg.ui.SVGResource;
 
 /**
- * Action group for command type.
+ * Action group that represents command goal.
  *
  * @author Artem Zatsarynnyi
  */
-class CommandTypePopUpGroup extends DefaultActionGroup {
+class CommandGoalPopUpGroup extends DefaultActionGroup {
 
-    private final CommandType         commandType;
-    private final CommandTypeRegistry commandTypeRegistry;
-    private final IconRegistry        iconRegistry;
+    private final CommandGoal  commandGoal;
+    private final IconRegistry iconRegistry;
 
     @Inject
-    CommandTypePopUpGroup(@Assisted String commandTypeId,
+    CommandGoalPopUpGroup(@Assisted String commandGoalId,
                           ActionManager actionManager,
-                          CommandTypeRegistry commandTypeRegistry,
+                          PredefinedCommandGoalRegistry predefinedCommandGoalRegistry,
                           IconRegistry iconRegistry) {
         super(actionManager);
 
-        this.commandTypeRegistry = commandTypeRegistry;
         this.iconRegistry = iconRegistry;
 
-        commandType = commandTypeRegistry.getCommandTypeById(commandTypeId);
+        commandGoal = predefinedCommandGoalRegistry.getGoalByIdOrDefault(commandGoalId);
 
         setPopup(true);
 
         // set icon
-        final SVGResource commandTypeIcon = getCommandTypeIcon();
+        final SVGResource commandTypeIcon = getCommandGoalIcon();
         if (commandTypeIcon != null) {
             getTemplatePresentation().setSVGResource(commandTypeIcon);
         }
@@ -57,22 +55,19 @@ class CommandTypePopUpGroup extends DefaultActionGroup {
 
     @Override
     public void update(ActionEvent e) {
-        e.getPresentation().setText(commandType.getDisplayName() + " (" + getChildrenCount() + ")");
+        e.getPresentation().setText(commandGoal.getDisplayName() + " (" + getChildrenCount() + ")");
     }
 
-    private SVGResource getCommandTypeIcon() {
-        final String commandTypeId = commandType.getId();
-        final CommandType commandType = commandTypeRegistry.getCommandTypeById(commandTypeId);
+    private SVGResource getCommandGoalIcon() {
+        final String goalId = commandGoal.getId();
 
-        if (commandType != null) {
-            final Icon icon = iconRegistry.getIconIfExist(commandTypeId + ".commands.category.icon");
+        final Icon icon = iconRegistry.getIconIfExist(goalId + ".commands.category.icon");
 
-            if (icon != null) {
-                final SVGImage svgImage = icon.getSVGImage();
+        if (icon != null) {
+            final SVGImage svgImage = icon.getSVGImage();
 
-                if (svgImage != null) {
-                    return icon.getSVGResource();
-                }
+            if (svgImage != null) {
+                return icon.getSVGResource();
             }
         }
 

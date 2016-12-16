@@ -11,12 +11,14 @@
 
 package org.eclipse.che.ide.command.goal;
 
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.ide.api.command.CommandGoal;
-import org.eclipse.che.ide.api.command.CommandGoalRegistry;
+import org.eclipse.che.ide.api.command.PredefinedCommandGoalRegistry;
 import org.eclipse.che.ide.util.loging.Log;
 
 import java.util.ArrayList;
@@ -28,17 +30,20 @@ import java.util.Set;
 import static java.util.Collections.unmodifiableList;
 
 /**
- * Implementation of {@link CommandGoalRegistry}.
+ * Implementation of {@link PredefinedCommandGoalRegistry}.
  *
  * @author Artem Zatsarynnyi
  */
 @Singleton
-public class CommandGoalRegistryImpl implements CommandGoalRegistry {
+public class PredefinedCommandGoalRegistryImpl implements PredefinedCommandGoalRegistry {
 
-    private final Map<String, CommandGoal> commandGaols;
+    private final CommandGoal              defaultGoal;
+    private final Map<String, CommandGoal> commandGoals;
 
-    public CommandGoalRegistryImpl() {
-        this.commandGaols = new HashMap<>();
+    @Inject
+    public PredefinedCommandGoalRegistryImpl(@Named("default") CommandGoal defaultCommandGoal) {
+        defaultGoal = defaultCommandGoal;
+        commandGoals = new HashMap<>();
     }
 
     @Inject(optional = true)
@@ -46,22 +51,35 @@ public class CommandGoalRegistryImpl implements CommandGoalRegistry {
         for (CommandGoal type : commandGoals) {
             final String id = type.getId();
 
-            if (this.commandGaols.containsKey(id)) {
+            if (this.commandGoals.containsKey(id)) {
                 Log.warn(getClass(), "Command goal with ID " + id + " is already registered.");
             } else {
-                this.commandGaols.put(id, type);
+                this.commandGoals.put(id, type);
             }
         }
     }
 
-    @Nullable
     @Override
-    public CommandGoal getCommandGoalById(String id) {
-        return commandGaols.get(id);
+    public Optional<CommandGoal> getGoalById(String id) {
+        return Optional.fromNullable(commandGoals.get(id));
     }
 
     @Override
-    public List<CommandGoal> getCommandGoals() {
-        return unmodifiableList(new ArrayList<>(commandGaols.values()));
+    public CommandGoal getGoalByIdOrDefault(@Nullable String id) {
+        if (id == null) {
+            return getDefaultGoal();
+        }
+
+        return getGoalById(id).or(getDefaultGoal());
+    }
+
+    @Override
+    public CommandGoal getDefaultGoal() {
+        return defaultGoal;
+    }
+
+    @Override
+    public List<CommandGoal> getAllGoals() {
+        return unmodifiableList(new ArrayList<>(commandGoals.values()));
     }
 }

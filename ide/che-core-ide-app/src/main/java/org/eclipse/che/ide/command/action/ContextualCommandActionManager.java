@@ -18,15 +18,16 @@ import com.google.inject.Singleton;
 import org.eclipse.che.ide.api.action.Action;
 import org.eclipse.che.ide.api.action.ActionManager;
 import org.eclipse.che.ide.api.action.DefaultActionGroup;
+import org.eclipse.che.ide.api.command.ContextualCommand;
 import org.eclipse.che.ide.api.command.ContextualCommandManager;
 import org.eclipse.che.ide.api.command.ContextualCommandManager.CommandChangedListener;
 import org.eclipse.che.ide.api.command.ContextualCommandManager.CommandLoadedListener;
-import org.eclipse.che.ide.api.command.ContextualCommand;
 import org.eclipse.che.ide.api.component.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_GOAL_ATTRIBUTE_NAME;
 import static org.eclipse.che.ide.api.action.IdeActions.GROUP_CONSOLES_TREE_CONTEXT_MENU;
 import static org.eclipse.che.ide.api.action.IdeActions.GROUP_EDITOR_TAB_CONTEXT_MENU;
 import static org.eclipse.che.ide.api.action.IdeActions.GROUP_MAIN_CONTEXT_MENU;
@@ -47,26 +48,26 @@ public class ContextualCommandActionManager implements Component,
     private final ContextualCommandManager       commandManager;
     private final ActionManager                  actionManager;
     private final CommandsActionGroup            commandsActionGroup;
-    private final CommandTypePopUpGroupFactory   commandTypePopUpGroupFactory;
+    private final CommandGoalPopUpGroupFactory   commandGoalPopUpGroupFactory;
     private final ContextualCommandActionFactory contextualCommandActionFactory;
 
     private final Map<String, Action>             command2Action;
-    private final Map<String, DefaultActionGroup> commandTypePopUpGroups;
+    private final Map<String, DefaultActionGroup> commandGoalPopUpGroups;
 
     @Inject
     public ContextualCommandActionManager(ContextualCommandManager commandManager,
                                           ActionManager actionManager,
                                           CommandsActionGroup commandsActionGroup,
-                                          CommandTypePopUpGroupFactory commandTypePopUpGroupFactory,
+                                          CommandGoalPopUpGroupFactory commandGoalPopUpGroupFactory,
                                           ContextualCommandActionFactory contextualCommandActionFactory) {
         this.commandManager = commandManager;
         this.actionManager = actionManager;
         this.commandsActionGroup = commandsActionGroup;
-        this.commandTypePopUpGroupFactory = commandTypePopUpGroupFactory;
+        this.commandGoalPopUpGroupFactory = commandGoalPopUpGroupFactory;
         this.contextualCommandActionFactory = contextualCommandActionFactory;
 
         command2Action = new HashMap<>();
-        commandTypePopUpGroups = new HashMap<>();
+        commandGoalPopUpGroups = new HashMap<>();
 
         commandManager.addCommandLoadedListener(this);
         commandManager.addCommandChangedListener(this);
@@ -114,20 +115,23 @@ public class ContextualCommandActionManager implements Component,
      * If appropriate action group doesn't exist it will be created and added to right place.
      */
     private DefaultActionGroup getActionGroupForCommand(ContextualCommand command) {
-        final String commandTypeId = command.getType();
-
-        DefaultActionGroup commandTypePopUpGroup = commandTypePopUpGroups.get(commandTypeId);
-
-        if (commandTypePopUpGroup == null) {
-            commandTypePopUpGroup = commandTypePopUpGroupFactory.create(commandTypeId);
-
-            actionManager.registerAction(commandTypeId, commandTypePopUpGroup);
-            commandTypePopUpGroups.put(commandTypeId, commandTypePopUpGroup);
-
-            commandsActionGroup.add(commandTypePopUpGroup);
+        String goalId = command.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
+        if (goalId == null) {
+            goalId = "common";
         }
 
-        return commandTypePopUpGroup;
+        DefaultActionGroup commandGoalPopUpGroup = commandGoalPopUpGroups.get(goalId);
+
+        if (commandGoalPopUpGroup == null) {
+            commandGoalPopUpGroup = commandGoalPopUpGroupFactory.create(goalId);
+
+            actionManager.registerAction(goalId, commandGoalPopUpGroup);
+            commandGoalPopUpGroups.put(goalId, commandGoalPopUpGroup);
+
+            commandsActionGroup.add(commandGoalPopUpGroup);
+        }
+
+        return commandGoalPopUpGroup;
     }
 
     @Override
@@ -155,7 +159,7 @@ public class ContextualCommandActionManager implements Component,
             }
 
             // remove action from it's action group
-            final DefaultActionGroup commandTypePopUpGroup = commandTypePopUpGroups.get(command.getType());
+            final DefaultActionGroup commandTypePopUpGroup = commandGoalPopUpGroups.get(command.getType());
 
             if (commandTypePopUpGroup != null) {
                 commandTypePopUpGroup.remove(action);
