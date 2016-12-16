@@ -17,13 +17,11 @@ import com.google.inject.assistedinject.Assisted;
 import org.eclipse.che.api.promises.client.Promise;
 import org.eclipse.che.api.promises.client.PromiseProvider;
 import org.eclipse.che.ide.api.command.CommandGoal;
-import org.eclipse.che.ide.api.command.PredefinedCommandGoalRegistry;
 import org.eclipse.che.ide.api.data.tree.Node;
-import org.eclipse.che.ide.api.icon.Icon;
-import org.eclipse.che.ide.api.icon.IconRegistry;
+import org.eclipse.che.ide.command.CommandUtils;
 import org.eclipse.che.ide.project.node.SyntheticNode;
 import org.eclipse.che.ide.ui.smartTree.presentation.NodePresentation;
-import org.vectomatic.dom.svg.ui.SVGImage;
+import org.vectomatic.dom.svg.ui.SVGResource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,21 +35,18 @@ public class CommandGoalNode extends SyntheticNode<CommandGoal> {
 
     private final List<? extends AbstractCommandNode> commands;
     private final PromiseProvider                     promiseProvider;
-    private final PredefinedCommandGoalRegistry       commandTypeRegistry;
-    private final IconRegistry                        iconRegistry;
+    private final CommandUtils                        commandUtils;
 
     @Inject
     public CommandGoalNode(@Assisted CommandGoal data,
                            @Assisted List<? extends AbstractCommandNode> commands,
                            PromiseProvider promiseProvider,
-                           PredefinedCommandGoalRegistry predefinedCommandGoalRegistry,
-                           IconRegistry iconRegistry) {
+                           CommandUtils commandUtils) {
         super(data, null);
 
         this.commands = commands;
         this.promiseProvider = promiseProvider;
-        this.commandTypeRegistry = predefinedCommandGoalRegistry;
-        this.iconRegistry = iconRegistry;
+        this.commandUtils = commandUtils;
     }
 
     @Override
@@ -59,19 +54,9 @@ public class CommandGoalNode extends SyntheticNode<CommandGoal> {
         presentation.setPresentableText(getName().toUpperCase() + " (" + commands.size() + ")");
         presentation.setPresentableTextCss("font-weight: bold;");
 
-        final String commandGoalId = getData().getId();
-        final CommandGoal commandGoal = commandTypeRegistry.getGoalByIdOrDefault(commandGoalId);
-
-        if (commandGoal != null) {
-            final Icon icon = iconRegistry.getIconIfExist(commandGoalId + ".commands.category.icon");
-
-            if (icon != null) {
-                final SVGImage svgImage = icon.getSVGImage();
-
-                if (svgImage != null) {
-                    presentation.setPresentableIcon(icon.getSVGResource());
-                }
-            }
+        final SVGResource goalIcon = commandUtils.getCommandGoalIcon(getData().getId());
+        if (goalIcon != null) {
+            presentation.setPresentableIcon(goalIcon);
         }
     }
 

@@ -22,17 +22,13 @@ import org.eclipse.che.ide.api.action.Action;
 import org.eclipse.che.ide.api.action.ActionEvent;
 import org.eclipse.che.ide.api.app.AppContext;
 import org.eclipse.che.ide.api.command.CommandManager;
-import org.eclipse.che.ide.api.command.CommandType;
-import org.eclipse.che.ide.api.command.CommandTypeRegistry;
 import org.eclipse.che.ide.api.command.ContextualCommand;
-import org.eclipse.che.ide.api.icon.Icon;
-import org.eclipse.che.ide.api.icon.IconRegistry;
 import org.eclipse.che.ide.api.resources.Project;
 import org.eclipse.che.ide.api.resources.Resource;
 import org.eclipse.che.ide.api.selection.Selection;
 import org.eclipse.che.ide.api.selection.SelectionAgent;
+import org.eclipse.che.ide.command.CommandUtils;
 import org.eclipse.che.ide.machine.chooser.MachineChooser;
-import org.vectomatic.dom.svg.ui.SVGImage;
 import org.vectomatic.dom.svg.ui.SVGResource;
 
 import java.util.List;
@@ -44,34 +40,28 @@ import java.util.List;
  */
 class ContextualCommandAction extends Action {
 
-    private final ContextualCommand   command;
-    private final CommandManager      commandManager;
-    private final AppContext          appContext;
-    private final IconRegistry        iconRegistry;
-    private final CommandTypeRegistry commandTypeRegistry;
-    private final SelectionAgent      selectionAgent;
-    private final MachineChooser      machineChooser;
+    private final ContextualCommand command;
+    private final CommandManager    commandManager;
+    private final AppContext        appContext;
+    private final SelectionAgent    selectionAgent;
+    private final MachineChooser    machineChooser;
 
     @Inject
     ContextualCommandAction(@Assisted ContextualCommand command,
                             CommandManager commandManager,
                             AppContext appContext,
-                            IconRegistry iconRegistry,
-                            CommandTypeRegistry commandTypeRegistry,
                             SelectionAgent selectionAgent,
-                            MachineChooser machineChooser) {
+                            MachineChooser machineChooser,
+                            CommandUtils commandUtils) {
         super(command.getName());
 
         this.command = command;
         this.commandManager = commandManager;
         this.appContext = appContext;
-        this.iconRegistry = iconRegistry;
-        this.commandTypeRegistry = commandTypeRegistry;
         this.selectionAgent = selectionAgent;
         this.machineChooser = machineChooser;
 
-        // set icon
-        final SVGResource commandIcon = getCommandIcon();
+        final SVGResource commandIcon = commandUtils.getCommandTypeIcon(command.getType());
         if (commandIcon != null) {
             getTemplatePresentation().setSVGResource(commandIcon);
         }
@@ -144,25 +134,6 @@ class ContextualCommandAction extends Action {
 
             if (possibleNode instanceof Machine) {
                 return (Machine)possibleNode;
-            }
-        }
-
-        return null;
-    }
-
-    private SVGResource getCommandIcon() {
-        final String commandTypeId = command.getType();
-        final CommandType commandType = commandTypeRegistry.getCommandTypeById(commandTypeId);
-
-        if (commandType != null) {
-            final Icon icon = iconRegistry.getIconIfExist(commandTypeId + ".commands.category.icon");
-
-            if (icon != null) {
-                final SVGImage svgImage = icon.getSVGImage();
-
-                if (svgImage != null) {
-                    return icon.getSVGResource();
-                }
             }
         }
 

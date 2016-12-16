@@ -23,7 +23,6 @@ import org.eclipse.che.api.promises.client.OperationException;
 import org.eclipse.che.api.promises.client.PromiseError;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.ide.DelayedTask;
-import org.eclipse.che.ide.api.command.BaseCommandGoal;
 import org.eclipse.che.ide.api.command.CommandGoal;
 import org.eclipse.che.ide.api.command.CommandType;
 import org.eclipse.che.ide.api.command.ContextualCommand;
@@ -35,6 +34,7 @@ import org.eclipse.che.ide.api.machine.events.WsAgentStateHandler;
 import org.eclipse.che.ide.api.notification.NotificationManager;
 import org.eclipse.che.ide.api.parts.WorkspaceAgent;
 import org.eclipse.che.ide.api.parts.base.BasePresenter;
+import org.eclipse.che.ide.command.CommandUtils;
 import org.vectomatic.dom.svg.ui.SVGResource;
 
 import java.util.ArrayList;
@@ -42,8 +42,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_GOAL_ATTRIBUTE_NAME;
 import static org.eclipse.che.ide.api.notification.StatusNotification.DisplayMode.EMERGE_MODE;
 import static org.eclipse.che.ide.api.notification.StatusNotification.Status.FAIL;
 import static org.eclipse.che.ide.api.parts.PartStackType.NAVIGATION;
@@ -65,11 +63,12 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
     private final CommandsExplorerResources     resources;
     private final WorkspaceAgent                workspaceAgent;
     private final ContextualCommandManager      commandManager;
-    private final PredefinedCommandGoalRegistry predefinedCommandGoalRegistry;
+    private final PredefinedCommandGoalRegistry goalRegistry;
     private final NotificationManager           notificationManager;
     private final CommandTypeChooser            commandTypeChooser;
+    private final CommandUtils                  commandUtils;
 
-    private RefreshViewTask refreshViewTask = new RefreshViewTask();
+    private final RefreshViewTask refreshViewTask;
 
     @Inject
     public CommandsExplorerPresenter(CommandsExplorerView view,
@@ -79,14 +78,18 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
                                      ContextualCommandManager commandManager,
                                      PredefinedCommandGoalRegistry predefinedCommandGoalRegistry,
                                      NotificationManager notificationManager,
-                                     CommandTypeChooser commandTypeChooser) {
+                                     CommandTypeChooser commandTypeChooser,
+                                     CommandUtils commandUtils) {
         this.view = view;
-        resources = commandsExplorerResources;
+        this.resources = commandsExplorerResources;
         this.workspaceAgent = workspaceAgent;
         this.commandManager = commandManager;
-        this.predefinedCommandGoalRegistry = predefinedCommandGoalRegistry;
+        this.goalRegistry = predefinedCommandGoalRegistry;
         this.notificationManager = notificationManager;
         this.commandTypeChooser = commandTypeChooser;
+        this.commandUtils = commandUtils;
+
+        refreshViewTask = new RefreshViewTask();
 
         view.setDelegate(this);
 
@@ -222,14 +225,14 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
 
     /**
      * {@link DelayedTask} for refreshing the view and optionally selecting the specified command.
-     * Tree widget in the view works asynchronously by using events and it needs some time to be fully rendered.
-     * <p>
-     * So successive refreshing view shortly.
+     * <p>Tree widget in the view works asynchronously using events
+     * and it needs some time to be fully rendered.
+     * So successive refreshing view must be called with some delay.
      */
     private class RefreshViewTask extends DelayedTask {
 
         // delay determined experimentally
-        private final int delayMillis = 300;
+        private static final int DELAY_MILLIS = 300;
 
         private ContextualCommand command;
 
@@ -244,46 +247,27 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
                     public void run() {
                         view.selectCommand(command);
                     }
-                }.schedule(delayMillis);
+                }.schedule(DELAY_MILLIS);
             }
         }
 
         // FIXME: when #delay() is invoking then command must be cleared
-        void delayAndSelectCommand(ContextualCommand command) {
+        void delayAndSelectCommand(@Nullable ContextualCommand command) {
             this.command = command;
 
-            delay(delayMillis);
+            delay(DELAY_MILLIS);
         }
 
         private void refreshView() {
             final Map<CommandGoal, List<ContextualCommand>> commandsByGoal = new HashMap<>();
 
-            // all predefined command goals have to be shown in the view
+            // all predefined command goals must be shown in the view
             // so populate map by all registered command goals
-            for (CommandGoal goal : predefinedCommandGoalRegistry.getAllGoals()) {
+            for (CommandGoal goal : goalRegistry.getAllGoals()) {
                 commandsByGoal.put(goal, new ArrayList<ContextualCommand>());
             }
 
-            for (ContextualCommand command : commandManager.getCommands()) {
-                final String goalId = command.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
-
-                final CommandGoal commandGoal;
-                if (isNullOrEmpty(goalId)) {
-                    commandGoal = predefinedCommandGoalRegistry.getDefaultGoal();
-                } else {
-                    commandGoal = predefinedCommandGoalRegistry.getGoalById(goalId)
-                                                               .or(new BaseCommandGoal(goalId, goalId));
-                }
-
-                List<ContextualCommand> commandsOfGoal = commandsByGoal.get(commandGoal);
-
-                if (commandsOfGoal == null) {
-                    commandsOfGoal = new ArrayList<>();
-                    commandsByGoal.put(commandGoal, commandsOfGoal);
-                }
-
-                commandsOfGoal.add(command);
-            }
+            commandsByGoal.putAll(commandUtils.groupCommandsByGoal(commandManager.getCommands()));
 
             view.setCommands(commandsByGoal);
         }

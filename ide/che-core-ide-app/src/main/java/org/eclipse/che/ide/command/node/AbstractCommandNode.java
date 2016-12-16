@@ -11,16 +11,13 @@
 package org.eclipse.che.ide.command.node;
 
 import org.eclipse.che.api.promises.client.Promise;
-import org.eclipse.che.ide.api.command.CommandType;
-import org.eclipse.che.ide.api.command.CommandTypeRegistry;
 import org.eclipse.che.ide.api.command.ContextualCommand;
 import org.eclipse.che.ide.api.data.tree.Node;
 import org.eclipse.che.ide.api.data.tree.settings.NodeSettings;
-import org.eclipse.che.ide.api.icon.Icon;
-import org.eclipse.che.ide.api.icon.IconRegistry;
+import org.eclipse.che.ide.command.CommandUtils;
 import org.eclipse.che.ide.project.node.SyntheticNode;
 import org.eclipse.che.ide.ui.smartTree.presentation.NodePresentation;
-import org.vectomatic.dom.svg.ui.SVGImage;
+import org.vectomatic.dom.svg.ui.SVGResource;
 
 import java.util.List;
 
@@ -31,37 +28,23 @@ import java.util.List;
  */
 class AbstractCommandNode extends SyntheticNode<ContextualCommand> {
 
-    private CommandTypeRegistry commandTypeRegistry;
-    private IconRegistry        iconRegistry;
+    private final CommandUtils commandUtils;
 
     AbstractCommandNode(ContextualCommand data,
                         NodeSettings nodeSettings,
-                        CommandTypeRegistry commandTypeRegistry,
-                        IconRegistry iconRegistry) {
+                        CommandUtils commandUtils) {
         super(data, nodeSettings);
 
-        this.commandTypeRegistry = commandTypeRegistry;
-        this.iconRegistry = iconRegistry;
+        this.commandUtils = commandUtils;
     }
 
     @Override
     public void updatePresentation(NodePresentation presentation) {
         presentation.setPresentableText(getName());
 
-        // set icon
-        final String commandTypeId = getData().getType();
-        final CommandType commandType = commandTypeRegistry.getCommandTypeById(commandTypeId);
-
-        if (commandType != null) {
-            final Icon icon = iconRegistry.getIconIfExist(commandTypeId + ".commands.category.icon");
-
-            if (icon != null) {
-                final SVGImage svgImage = icon.getSVGImage();
-
-                if (svgImage != null) {
-                    presentation.setPresentableIcon(icon.getSVGResource());
-                }
-            }
+        final SVGResource commandTypeIcon = commandUtils.getCommandTypeIcon(getData().getType());
+        if (commandTypeIcon != null) {
+            presentation.setPresentableIcon(commandTypeIcon);
         }
     }
 

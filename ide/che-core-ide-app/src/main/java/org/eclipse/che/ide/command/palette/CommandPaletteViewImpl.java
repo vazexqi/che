@@ -20,10 +20,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.eclipse.che.ide.api.command.BaseCommandGoal;
 import org.eclipse.che.ide.api.command.CommandGoal;
 import org.eclipse.che.ide.api.command.ContextualCommand;
-import org.eclipse.che.ide.api.command.PredefinedCommandGoalRegistry;
 import org.eclipse.che.ide.command.node.CommandGoalNode;
 import org.eclipse.che.ide.command.node.ExecutableCommandNode;
 import org.eclipse.che.ide.command.node.NodeFactory;
@@ -33,12 +31,8 @@ import org.eclipse.che.ide.ui.smartTree.Tree;
 import org.eclipse.che.ide.ui.window.Window;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_GOAL_ATTRIBUTE_NAME;
 
 /**
  * Implementation of {@link CommandPaletteView}.
@@ -48,10 +42,9 @@ import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_GOAL_ATTRIB
 @Singleton
 public class CommandPaletteViewImpl extends Window implements CommandPaletteView {
 
-    private static final CommandsPaletteViewImplUiBinder UI_BINDER = GWT.create(CommandsPaletteViewImplUiBinder.class);
+    private static final CommandPaletteViewImplUiBinder UI_BINDER = GWT.create(CommandPaletteViewImplUiBinder.class);
 
-    private final PredefinedCommandGoalRegistry predefinedCommandGoalRegistry;
-    private final NodeFactory                   nodeFactory;
+    private final NodeFactory nodeFactory;
 
     @UiField
     TextBox filterField;
@@ -62,8 +55,7 @@ public class CommandPaletteViewImpl extends Window implements CommandPaletteView
     private ActionDelegate delegate;
 
     @Inject
-    public CommandPaletteViewImpl(PredefinedCommandGoalRegistry predefinedCommandGoalRegistry, NodeFactory nodeFactory) {
-        this.predefinedCommandGoalRegistry = predefinedCommandGoalRegistry;
+    public CommandPaletteViewImpl(NodeFactory nodeFactory) {
         this.nodeFactory = nodeFactory;
 
         tree = new Tree(new NodeStorage(), new NodeLoader());
@@ -93,31 +85,8 @@ public class CommandPaletteViewImpl extends Window implements CommandPaletteView
     }
 
     @Override
-    public void setCommands(List<ContextualCommand> commands) {
-        final Map<CommandGoal, List<ContextualCommand>> commandsByGoal = new HashMap<>();
-
-        for (ContextualCommand command : commands) {
-            final String goalId = command.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
-
-            final CommandGoal commandGoal;
-            if (isNullOrEmpty(goalId)) {
-                commandGoal = predefinedCommandGoalRegistry.getDefaultGoal();
-            } else {
-                commandGoal = predefinedCommandGoalRegistry.getGoalById(goalId)
-                                                           .or(new BaseCommandGoal(goalId, goalId));
-            }
-
-            List<ContextualCommand> commandsOfGoal = commandsByGoal.get(commandGoal);
-
-            if (commandsOfGoal == null) {
-                commandsOfGoal = new ArrayList<>();
-                commandsByGoal.put(commandGoal, commandsOfGoal);
-            }
-
-            commandsOfGoal.add(command);
-        }
-
-        renderCommands(commandsByGoal);
+    public void setCommands(Map<CommandGoal, List<ContextualCommand>> commands) {
+        renderCommands(commands);
     }
 
     /** Render commands grouped by goals. */
@@ -152,6 +121,6 @@ public class CommandPaletteViewImpl extends Window implements CommandPaletteView
         delegate.onFilterChanged(filterField.getValue());
     }
 
-    interface CommandsPaletteViewImplUiBinder extends UiBinder<Widget, CommandPaletteViewImpl> {
+    interface CommandPaletteViewImplUiBinder extends UiBinder<Widget, CommandPaletteViewImpl> {
     }
 }

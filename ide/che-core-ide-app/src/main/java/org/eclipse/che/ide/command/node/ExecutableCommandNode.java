@@ -13,17 +13,15 @@ package org.eclipse.che.ide.command.node;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
-import org.eclipse.che.ide.api.command.CommandTypeRegistry;
 import org.eclipse.che.ide.api.command.ContextualCommand;
 import org.eclipse.che.ide.api.data.tree.HasAction;
-import org.eclipse.che.ide.api.icon.IconRegistry;
+import org.eclipse.che.ide.command.CommandUtils;
 
 /**
  * Extension of {@link AbstractCommandNode} that can execute
  * a command when performing an action is requested.
  *
  * @author Artem Zatsarynnyi
- * @see #actionPerformed()
  */
 public class ExecutableCommandNode extends AbstractCommandNode implements HasAction {
 
@@ -32,9 +30,8 @@ public class ExecutableCommandNode extends AbstractCommandNode implements HasAct
     @Inject
     public ExecutableCommandNode(@Assisted ContextualCommand data,
                                  @Assisted ActionDelegate actionDelegate,
-                                 CommandTypeRegistry commandTypeRegistry,
-                                 IconRegistry iconRegistry) {
-        super(data, null, commandTypeRegistry, iconRegistry);
+                                 CommandUtils commandUtils) {
+        super(data, null, commandUtils);
 
         this.actionDelegate = actionDelegate;
     }

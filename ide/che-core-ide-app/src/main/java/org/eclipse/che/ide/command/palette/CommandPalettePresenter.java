@@ -19,9 +19,10 @@ import org.eclipse.che.api.promises.client.Operation;
 import org.eclipse.che.api.promises.client.OperationException;
 import org.eclipse.che.ide.api.app.AppContext;
 import org.eclipse.che.ide.api.command.CommandManager;
-import org.eclipse.che.ide.api.command.ContextualCommandManager;
 import org.eclipse.che.ide.api.command.ContextualCommand;
+import org.eclipse.che.ide.api.command.ContextualCommandManager;
 import org.eclipse.che.ide.api.dialogs.DialogFactory;
+import org.eclipse.che.ide.command.CommandUtils;
 import org.eclipse.che.ide.machine.chooser.MachineChooser;
 
 import java.util.Collections;
@@ -44,6 +45,7 @@ public class CommandPalettePresenter implements CommandPaletteView.ActionDelegat
     private final DialogFactory            dialogFactory;
     private final AppContext               appContext;
     private final MachineChooser           machineChooser;
+    private final CommandUtils             commandUtils;
 
     @Inject
     public CommandPalettePresenter(CommandPaletteView view,
@@ -51,13 +53,15 @@ public class CommandPalettePresenter implements CommandPaletteView.ActionDelegat
                                    CommandManager commandExecutor,
                                    DialogFactory dialogFactory,
                                    AppContext appContext,
-                                   MachineChooser machineChooser) {
+                                   MachineChooser machineChooser,
+                                   CommandUtils commandUtils) {
         this.view = view;
         this.commandManager = commandManager;
         this.commandExecutor = commandExecutor;
         this.dialogFactory = dialogFactory;
         this.appContext = appContext;
         this.machineChooser = machineChooser;
+        this.commandUtils = commandUtils;
 
         view.setDelegate(this);
     }
@@ -65,7 +69,7 @@ public class CommandPalettePresenter implements CommandPaletteView.ActionDelegat
     /** Open Command Palette. */
     public void showDialog() {
         view.show();
-        view.setCommands(commandManager.getCommands());
+        view.setCommands(commandUtils.groupCommandsByGoal(commandManager.getCommands()));
     }
 
     @Override
@@ -84,7 +88,7 @@ public class CommandPalettePresenter implements CommandPaletteView.ActionDelegat
             }
         }
 
-        view.setCommands(filteredCommands);
+        view.setCommands(commandUtils.groupCommandsByGoal(filteredCommands));
     }
 
     @Override

@@ -10,10 +10,12 @@
  *******************************************************************************/
 package org.eclipse.che.ide.command.palette;
 
+import org.eclipse.che.ide.api.command.CommandGoal;
 import org.eclipse.che.ide.api.command.ContextualCommand;
 import org.eclipse.che.ide.api.mvp.View;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * The view of {@link CommandPalettePresenter}.
@@ -28,8 +30,13 @@ public interface CommandPaletteView extends View<CommandPaletteView.ActionDelega
     /** Close the view. */
     void close();
 
-    /** Sets the commands to display in the view. */
-    void setCommands(List<ContextualCommand> commands);
+    /**
+     * Sets the commands to display in the view.
+     *
+     * @param commands
+     *         commands grouped by type
+     */
+    void setCommands(Map<CommandGoal, List<ContextualCommand>> commands);
 
     /** The action delegate for this view. */
     interface ActionDelegate {

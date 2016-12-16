@@ -27,12 +27,12 @@ import java.util.Map;
 public interface CommandsExplorerView extends View<CommandsExplorerView.ActionDelegate> {
 
     /**
-     * Sets the commands to show in the view.
+     * Sets the commands to display in the view.
      *
-     * @param workspaceCommands
-     *         workspace commands grouped by type
+     * @param commands
+     *         commands grouped by its type
      */
-    void setCommands(Map<CommandGoal, List<ContextualCommand>> workspaceCommands);
+    void setCommands(Map<CommandGoal, List<ContextualCommand>> commands);
 
     /** Returns the currently selected command goal or {@code null} if none. */
     @Nullable

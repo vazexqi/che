@@ -33,7 +33,7 @@ import static org.eclipse.che.ide.util.StringUtils.containsIgnoreCase;
  */
 public class MacroChooser implements MacroChooserView.ActionDelegate {
 
-    /** Comparator for ordering macros by it's name. */
+    /** Comparator for ordering macros by its name. */
     private static final Comparator<Macro> MACRO_COMPARATOR = new Comparator<Macro>() {
         @Override
         public int compare(Macro o1, Macro o2) {
