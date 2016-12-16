@@ -11,6 +11,7 @@
 package org.eclipse.che.ide.command.explorer;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
@@ -68,13 +69,7 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
     private final NotificationManager           notificationManager;
     private final CommandTypeChooser            commandTypeChooser;
 
-    /** {@link DelayedTask} for refreshing the view. */
-    private DelayedTask refreshViewTask = new DelayedTask() {
-        @Override
-        public void onExecute() {
-            refreshView();
-        }
-    };
+    private RefreshViewTask refreshViewTask = new RefreshViewTask();
 
     @Inject
     public CommandsExplorerPresenter(CommandsExplorerView view,
@@ -102,6 +97,7 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
 
     @Override
     public void go(AcceptsOneWidget container) {
+        // FIXME: ws-agent may not be ready to fetching data
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             @Override
             public void execute() {
@@ -149,17 +145,12 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
                     commandManager.createCommand(selectedCommandGoal.getId(),
                                                  selectedCommandType.getId(),
                                                  defaultApplicableContext)
-                                  .then(new Operation<ContextualCommand>() {
+                                  .catchError(new Operation<PromiseError>() {
                                       @Override
-                                      public void apply(ContextualCommand arg) throws OperationException {
-                                          view.selectCommand(arg);
+                                      public void apply(PromiseError arg) throws OperationException {
+                                          notificationManager.notify("Unable to create command", arg.getMessage(), FAIL, EMERGE_MODE);
                                       }
-                                  }).catchError(new Operation<PromiseError>() {
-                        @Override
-                        public void apply(PromiseError arg) throws OperationException {
-                            notificationManager.notify("Unable to create command", arg.getMessage(), FAIL, EMERGE_MODE);
-                        }
-                    });
+                                  });
                 }
             }
         });
@@ -208,49 +199,93 @@ public class CommandsExplorerPresenter extends BasePresenter implements Commands
 
     @Override
     public void onCommandAdded(ContextualCommand command) {
-        refreshViewTask.delay(300);
+        refreshViewAndSelectCommand(command);
     }
 
     @Override
     public void onCommandUpdated(ContextualCommand command) {
-        refreshViewTask.delay(300);
+        refreshView();
     }
 
     @Override
     public void onCommandRemoved(ContextualCommand command) {
-        refreshViewTask.delay(300);
+        refreshView();
     }
 
     private void refreshView() {
-        final Map<CommandGoal, List<ContextualCommand>> commandsByGoal = new HashMap<>();
+        refreshViewTask.delayAndSelectCommand(null);
+    }
 
-        // all predefined command goals have to be shown in the view
-        // so populate map by all registered command goals
-        for (CommandGoal goal : predefinedCommandGoalRegistry.getAllGoals()) {
-            commandsByGoal.put(goal, new ArrayList<ContextualCommand>());
+    private void refreshViewAndSelectCommand(ContextualCommand command) {
+        refreshViewTask.delayAndSelectCommand(command);
+    }
+
+    /**
+     * {@link DelayedTask} for refreshing the view and optionally selecting the specified command.
+     * Tree widget in the view works asynchronously by using events and it needs some time to be fully rendered.
+     * <p>
+     * So successive refreshing view shortly.
+     */
+    private class RefreshViewTask extends DelayedTask {
+
+        // delay determined experimentally
+        private final int delayMillis = 300;
+
+        private ContextualCommand command;
+
+        @Override
+        public void onExecute() {
+            refreshView();
+
+            if (command != null) {
+                // wait some time while tree in the view will be fully refreshed
+                new Timer() {
+                    @Override
+                    public void run() {
+                        view.selectCommand(command);
+                    }
+                }.schedule(delayMillis);
+            }
         }
 
-        for (ContextualCommand command : commandManager.getCommands()) {
-            final String goalId = command.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
+        // FIXME: when #delay() is invoking then command must be cleared
+        void delayAndSelectCommand(ContextualCommand command) {
+            this.command = command;
 
-            final CommandGoal commandGoal;
-            if (isNullOrEmpty(goalId)) {
-                commandGoal = predefinedCommandGoalRegistry.getDefaultGoal();
-            } else {
-                commandGoal = predefinedCommandGoalRegistry.getGoalById(goalId)
-                                                           .or(new BaseCommandGoal(goalId, goalId));
-            }
-
-            List<ContextualCommand> commandsOfGoal = commandsByGoal.get(commandGoal);
-
-            if (commandsOfGoal == null) {
-                commandsOfGoal = new ArrayList<>();
-                commandsByGoal.put(commandGoal, commandsOfGoal);
-            }
-
-            commandsOfGoal.add(command);
+            delay(delayMillis);
         }
 
-        view.setCommands(commandsByGoal);
+        private void refreshView() {
+            final Map<CommandGoal, List<ContextualCommand>> commandsByGoal = new HashMap<>();
+
+            // all predefined command goals have to be shown in the view
+            // so populate map by all registered command goals
+            for (CommandGoal goal : predefinedCommandGoalRegistry.getAllGoals()) {
+                commandsByGoal.put(goal, new ArrayList<ContextualCommand>());
+            }
+
+            for (ContextualCommand command : commandManager.getCommands()) {
+                final String goalId = command.getAttributes().get(COMMAND_GOAL_ATTRIBUTE_NAME);
+
+                final CommandGoal commandGoal;
+                if (isNullOrEmpty(goalId)) {
+                    commandGoal = predefinedCommandGoalRegistry.getDefaultGoal();
+                } else {
+                    commandGoal = predefinedCommandGoalRegistry.getGoalById(goalId)
+                                                               .or(new BaseCommandGoal(goalId, goalId));
+                }
+
+                List<ContextualCommand> commandsOfGoal = commandsByGoal.get(commandGoal);
+
+                if (commandsOfGoal == null) {
+                    commandsOfGoal = new ArrayList<>();
+                    commandsByGoal.put(commandGoal, commandsOfGoal);
+                }
+
+                commandsOfGoal.add(command);
+            }
+
+            view.setCommands(commandsByGoal);
+        }
     }
 }

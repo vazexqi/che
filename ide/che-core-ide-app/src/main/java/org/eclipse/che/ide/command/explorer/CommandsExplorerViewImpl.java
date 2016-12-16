@@ -32,6 +32,8 @@ import org.eclipse.che.ide.ui.smartTree.NodeStorage;
 import org.eclipse.che.ide.ui.smartTree.Tree;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,8 +49,9 @@ public class CommandsExplorerViewImpl extends BaseView<CommandsExplorerView.Acti
 
     private static final CommandsExplorerViewImplUiBinder UI_BINDER = GWT.create(CommandsExplorerViewImplUiBinder.class);
 
-    private final CommandsTreeRenderer treeRenderer;
-    private final NodeFactory          nodeFactory;
+    private final CommandsTreeRenderer                    treeRenderer;
+    private final NodeFactory                             nodeFactory;
+    private final Map<ContextualCommand, CommandFileNode> commandNodes;
 
     @UiField(provided = true)
     Tree tree;
@@ -60,6 +63,7 @@ public class CommandsExplorerViewImpl extends BaseView<CommandsExplorerView.Acti
         super(coreResources);
 
         this.nodeFactory = nodeFactory;
+        commandNodes = new HashMap<>();
 
         resources.commandsExplorerCss().ensureInjected();
 
@@ -94,12 +98,16 @@ public class CommandsExplorerViewImpl extends BaseView<CommandsExplorerView.Acti
     }
 
     private void renderCommands(Map<CommandGoal, List<ContextualCommand>> commands) {
+        commandNodes.clear();
         tree.getNodeStorage().clear();
 
         for (Map.Entry<CommandGoal, List<ContextualCommand>> entry : commands.entrySet()) {
             List<CommandFileNode> commandNodes = new ArrayList<>(entry.getValue().size());
             for (ContextualCommand command : entry.getValue()) {
-                commandNodes.add(nodeFactory.newCommandFileNode(command));
+                final CommandFileNode commandFileNode = nodeFactory.newCommandFileNode(command);
+                commandNodes.add(commandFileNode);
+
+                this.commandNodes.put(command, commandFileNode);
             }
 
             final CommandGoalNode commandGoalNode = nodeFactory.newCommandGoalNode(entry.getKey(), commandNodes);
@@ -127,8 +135,7 @@ public class CommandsExplorerViewImpl extends BaseView<CommandsExplorerView.Acti
 
     @Override
     public void selectCommand(ContextualCommand command) {
-        // TODO
-//        commandsTree.getSelectionModel().setSelection(new ArrayList<Node>());
+        tree.getSelectionModel().setSelection(Collections.<Node>singletonList(commandNodes.get(command)));
     }
 
     interface CommandsExplorerViewImplUiBinder extends UiBinder<Widget, CommandsExplorerViewImpl> {
