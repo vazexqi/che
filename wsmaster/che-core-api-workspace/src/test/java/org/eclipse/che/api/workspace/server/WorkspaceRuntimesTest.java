@@ -40,7 +40,6 @@ import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceRuntimeImpl;
 import org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent;
-import org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent.EventType;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.mockito.ArgumentCaptor;
@@ -323,7 +322,7 @@ public class WorkspaceRuntimesTest {
         // then
         verify(eventService).publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                                .withWorkspaceId(workspace.getId())
-                                               .withEventType(EventType.STARTING)
+                                               .withStatus(WorkspaceStatus.STARTING)
                                                .withPrevStatus(WorkspaceStatus.STOPPED));
     }
 
@@ -340,7 +339,7 @@ public class WorkspaceRuntimesTest {
         // then
         verify(eventService).publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                                .withWorkspaceId(workspace.getId())
-                                               .withEventType(EventType.RUNNING)
+                                               .withStatus(WorkspaceStatus.RUNNING)
                                                .withPrevStatus(WorkspaceStatus.STARTING));
     }
 
@@ -365,7 +364,7 @@ public class WorkspaceRuntimesTest {
             // then
             verify(eventService).publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                                    .withWorkspaceId(workspace.getId())
-                                                   .withEventType(EventType.ERROR)
+                                                   .withStatus(WorkspaceStatus.STOPPED)
                                                    .withPrevStatus(WorkspaceStatus.STARTING));
         }
     }
@@ -384,7 +383,7 @@ public class WorkspaceRuntimesTest {
         // then
         verify(eventService).publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                                .withWorkspaceId(workspace.getId())
-                                               .withEventType(EventType.STOPPING)
+                                               .withStatus(WorkspaceStatus.STOPPING)
                                                .withPrevStatus(WorkspaceStatus.RUNNING));
     }
 
@@ -402,7 +401,7 @@ public class WorkspaceRuntimesTest {
         // then
         verify(eventService).publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                                .withWorkspaceId(workspace.getId())
-                                               .withEventType(EventType.STOPPED)
+                                               .withStatus(WorkspaceStatus.STOPPED)
                                                .withPrevStatus(WorkspaceStatus.STOPPING));
     }
 
@@ -421,7 +420,7 @@ public class WorkspaceRuntimesTest {
             // then
             verify(eventService).publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                                    .withWorkspaceId(workspace.getId())
-                                                   .withEventType(EventType.ERROR)
+                                                   .withStatus(WorkspaceStatus.STOPPED)
                                                    .withPrevStatus(WorkspaceStatus.STOPPING)
                                                    .withError("Test error"));
         }
@@ -615,12 +614,12 @@ public class WorkspaceRuntimesTest {
             verify(eventService).publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                                    .withWorkspaceId(workspace.getId())
                                                    .withPrevStatus(WorkspaceStatus.RUNNING)
-                                                   .withEventType(EventType.SNAPSHOT_CREATING));
+                                                   .withStatus(WorkspaceStatus.SNAPSHOTTING));
             verify(eventService).publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                                    .withWorkspaceId(workspace.getId())
                                                    .withError("can't save")
                                                    .withPrevStatus(WorkspaceStatus.SNAPSHOTTING)
-                                                   .withEventType(EventType.SNAPSHOT_CREATION_ERROR));
+                                                   .withStatus(WorkspaceStatus.RUNNING));
             throw x;
         }
     }
@@ -638,11 +637,11 @@ public class WorkspaceRuntimesTest {
             runtimes.snapshot(workspace.getId());
         } catch (Exception x) {
             verify(eventService).publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
-                                                   .withEventType(EventType.SNAPSHOT_CREATING)
+                                                   .withStatus(WorkspaceStatus.SNAPSHOTTING)
                                                    .withPrevStatus(WorkspaceStatus.RUNNING)
                                                    .withWorkspaceId(workspace.getId()));
             verify(eventService).publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
-                                                   .withEventType(EventType.SNAPSHOT_CREATION_ERROR)
+                                                   .withStatus(WorkspaceStatus.RUNNING)
                                                    .withWorkspaceId(workspace.getId())
                                                    .withPrevStatus(WorkspaceStatus.SNAPSHOTTING)
                                                    .withError("test"));
@@ -665,11 +664,11 @@ public class WorkspaceRuntimesTest {
         runtimes.snapshot(workspace.getId());
 
         verify(eventService).publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
-                                               .withEventType(EventType.SNAPSHOT_CREATING)
+                                               .withStatus(WorkspaceStatus.SNAPSHOTTING)
                                                .withPrevStatus(WorkspaceStatus.RUNNING)
                                                .withWorkspaceId(workspace.getId()));
         verify(eventService).publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
-                                               .withEventType(EventType.SNAPSHOT_CREATED)
+                                               .withStatus(WorkspaceStatus.RUNNING)
                                                .withPrevStatus(WorkspaceStatus.SNAPSHOTTING)
                                                .withWorkspaceId(workspace.getId()));
         verify(envEngine).removeSnapshot(oldSnapshot);

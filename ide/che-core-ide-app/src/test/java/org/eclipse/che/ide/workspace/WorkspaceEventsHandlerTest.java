@@ -14,7 +14,6 @@ import com.google.gwt.core.client.Callback;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.core.rest.shared.dto.LinkParameter;
 import org.eclipse.che.api.machine.shared.dto.MachineConfigDto;
@@ -72,13 +71,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent.EventType.ERROR;
-import static org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent.EventType.RUNNING;
-import static org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent.EventType.SNAPSHOT_CREATED;
-import static org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent.EventType.SNAPSHOT_CREATING;
-import static org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent.EventType.SNAPSHOT_CREATION_ERROR;
-import static org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent.EventType.STARTING;
-import static org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent.EventType.STOPPED;
+import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.RUNNING;
+import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.SNAPSHOTTING;
+import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.STARTING;
+import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.STOPPED;
 import static org.eclipse.che.ide.api.notification.StatusNotification.DisplayMode.FLOAT_MODE;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyObject;
@@ -209,7 +205,7 @@ public class WorkspaceEventsHandlerTest {
     public void shouldSubscribesOnWsAgentOutputWhenWorkspaceIsStarting() throws Exception {
         WorkspaceRuntimeDto runtime = mock(WorkspaceRuntimeDto.class);
         WorkspaceConfigDto workspaceConfig = mock(WorkspaceConfigDto.class);
-        when(workspaceStatusEvent.getEventType()).thenReturn(STARTING);
+        when(workspaceStatusEvent.getStatus()).thenReturn(STARTING);
         when(workspace.getRuntime()).thenReturn(runtime);
         when(runtime.getActiveEnv()).thenReturn(ACTIVE_ENV);
         when(workspace.getConfig()).thenReturn(workspaceConfig);
@@ -256,7 +252,7 @@ public class WorkspaceEventsHandlerTest {
 
     //    @Test disabled because of GWT timer usage
     public void onWorkspaceStartingTest() throws Exception {
-        when(workspaceStatusEvent.getEventType()).thenReturn(STARTING);
+        when(workspaceStatusEvent.getStatus()).thenReturn(STARTING);
 
         workspaceEventsHandler.trackWorkspaceEvents(workspace, callback);
         workspaceEventsHandler.workspaceStatusSubscriptionHandler.onMessageReceived(workspaceStatusEvent);
@@ -275,8 +271,8 @@ public class WorkspaceEventsHandlerTest {
 
     @Test
     public void onWorkspaceStartedTest() throws Exception {
-        when(workspaceStatusEvent.getEventType()).thenReturn(RUNNING);
-        when(workspaceStatusEvent.getPrevStatus()).thenReturn(WorkspaceStatus.STARTING);
+        when(workspaceStatusEvent.getStatus()).thenReturn(RUNNING);
+        when(workspaceStatusEvent.getPrevStatus()).thenReturn(STARTING);
 
         workspaceEventsHandler.trackWorkspaceEvents(workspace, callback);
         workspaceEventsHandler.workspaceStatusSubscriptionHandler.onMessageReceived(workspaceStatusEvent);
@@ -301,7 +297,8 @@ public class WorkspaceEventsHandlerTest {
         workspaces.add(workspace);
         MessageDialog errorDialog = mock(MessageDialog.class);
         when(dialogFactory.createMessageDialog(anyString(), anyString(), (ConfirmCallback)anyObject())).thenReturn(errorDialog);
-        when(workspaceStatusEvent.getEventType()).thenReturn(ERROR);
+        when(workspaceStatusEvent.getStatus()).thenReturn(STOPPED);
+        when(workspaceStatusEvent.getError()).thenReturn("error");
 
         workspaceEventsHandler.trackWorkspaceEvents(workspace, callback);
         workspaceEventsHandler.workspaceStatusSubscriptionHandler.onMessageReceived(workspaceStatusEvent);
@@ -319,7 +316,7 @@ public class WorkspaceEventsHandlerTest {
 
     @Test
     public void onWorkspaceStoppedTest() throws Exception {
-        when(workspaceStatusEvent.getEventType()).thenReturn(STOPPED);
+        when(workspaceStatusEvent.getStatus()).thenReturn(STOPPED);
 
         workspaceEventsHandler.trackWorkspaceEvents(workspace, callback);
         workspaceEventsHandler.workspaceStatusSubscriptionHandler.onMessageReceived(workspaceStatusEvent);
@@ -329,7 +326,7 @@ public class WorkspaceEventsHandlerTest {
 
     @Test
     public void onSnapshotCreatingEventReceivedTest() throws Exception {
-        when(workspaceStatusEvent.getEventType()).thenReturn(SNAPSHOT_CREATING);
+        when(workspaceStatusEvent.getStatus()).thenReturn(SNAPSHOTTING);
 
         workspaceEventsHandler.trackWorkspaceEvents(workspace, callback);
         workspaceEventsHandler.workspaceStatusSubscriptionHandler.onMessageReceived(workspaceStatusEvent);
@@ -339,7 +336,8 @@ public class WorkspaceEventsHandlerTest {
 
     @Test
     public void onSnapshotCreatedEventReceivedTest() throws Exception {
-        when(workspaceStatusEvent.getEventType()).thenReturn(SNAPSHOT_CREATED);
+        when(workspaceStatusEvent.getStatus()).thenReturn(RUNNING);
+        when(workspaceStatusEvent.getPrevStatus()).thenReturn(SNAPSHOTTING);
 
         workspaceEventsHandler.trackWorkspaceEvents(workspace, callback);
         workspaceEventsHandler.workspaceStatusSubscriptionHandler.onMessageReceived(workspaceStatusEvent);
@@ -350,7 +348,9 @@ public class WorkspaceEventsHandlerTest {
 
     @Test
     public void onSnapshotCreationErrorEventReceivedTest() throws Exception {
-        when(workspaceStatusEvent.getEventType()).thenReturn(SNAPSHOT_CREATION_ERROR);
+        when(workspaceStatusEvent.getStatus()).thenReturn(RUNNING);
+        when(workspaceStatusEvent.getPrevStatus()).thenReturn(SNAPSHOTTING);
+        when(workspaceStatusEvent.getError()).thenReturn("error");
 
         workspaceEventsHandler.trackWorkspaceEvents(workspace, callback);
         workspaceEventsHandler.workspaceStatusSubscriptionHandler.onMessageReceived(workspaceStatusEvent);

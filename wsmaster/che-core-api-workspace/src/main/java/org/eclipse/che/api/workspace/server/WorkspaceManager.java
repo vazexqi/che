@@ -34,7 +34,6 @@ import org.eclipse.che.api.workspace.server.event.WorkspaceCreatedEvent;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.spi.WorkspaceDao;
-import org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent.EventType;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
@@ -473,10 +472,6 @@ public class WorkspaceManager {
      *
      * <p>Basically creates {@link SnapshotImpl snapshot} instance for each machine from
      * runtime workspace's active environment.
-     *
-     * <p> If snapshot of workspace's dev machine was created successfully
-     * publishes {@link EventType#SNAPSHOT_CREATED} event, otherwise publishes {@link EventType#SNAPSHOT_CREATION_ERROR}
-     * with appropriate error message.
      *
      * <p> Note that:
      * <br>Snapshots are created asynchronously

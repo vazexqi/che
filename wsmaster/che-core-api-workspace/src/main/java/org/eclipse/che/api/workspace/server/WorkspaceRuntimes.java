@@ -50,7 +50,6 @@ import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.ExtendedMachineImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceRuntimeImpl;
 import org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent;
-import org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent.EventType;
 import org.eclipse.che.commons.lang.concurrent.CloseableLock;
 import org.eclipse.che.commons.lang.concurrent.StripedLocks;
 import org.eclipse.che.dto.server.DtoFactory;
@@ -293,7 +292,7 @@ public class WorkspaceRuntimes {
         eventsService.publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                         .withWorkspaceId(workspaceId)
                                         .withPrevStatus(WorkspaceStatus.RUNNING)
-                                        .withEventType(EventType.STOPPING));
+                                        .withStatus(WorkspaceStatus.STOPPING));
         String error = null;
         try {
             envEngine.stop(workspaceId);
@@ -305,13 +304,11 @@ public class WorkspaceRuntimes {
             }
         }
 
-        final WorkspaceStatusEvent event = DtoFactory.newDto(WorkspaceStatusEvent.class)
-                                                     .withWorkspaceId(workspaceId)
-                                                     .withPrevStatus(WorkspaceStatus.STOPPING);
-        if (error == null) {
-            event.setEventType(EventType.STOPPED);
-        } else {
-            event.setEventType(EventType.ERROR);
+        WorkspaceStatusEvent event = DtoFactory.newDto(WorkspaceStatusEvent.class)
+                                               .withWorkspaceId(workspaceId)
+                                               .withPrevStatus(WorkspaceStatus.STOPPING)
+                                               .withStatus(WorkspaceStatus.STOPPED);
+        if (error != null) {
             event.setError(error);
         }
         eventsService.publish(event);
@@ -402,9 +399,6 @@ public class WorkspaceRuntimes {
     /**
      * Synchronously creates a snapshot of a given workspace,
      * the workspace must be {@link WorkspaceStatus#RUNNING}.
-     *
-     * <p>Publishes {@link EventType#SNAPSHOT_CREATING}, {@link EventType#SNAPSHOT_CREATED},
-     * {@link EventType#SNAPSHOT_CREATION_ERROR} like defined by {@link EventType}.
      *
      * @param workspaceId
      *         the id of workspace to create snapshot
@@ -658,7 +652,7 @@ public class WorkspaceRuntimes {
                          boolean recover) throws ServerException {
         eventsService.publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                         .withWorkspaceId(workspaceId)
-                                        .withEventType(EventType.STARTING)
+                                        .withStatus(WorkspaceStatus.STARTING)
                                         .withPrevStatus(WorkspaceStatus.STOPPED));
 
         try {
@@ -677,7 +671,7 @@ public class WorkspaceRuntimes {
 
             eventsService.publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                             .withWorkspaceId(workspaceId)
-                                            .withEventType(EventType.RUNNING)
+                                            .withStatus(WorkspaceStatus.RUNNING)
                                             .withPrevStatus(WorkspaceStatus.STARTING));
         } catch (ApiException | EnvironmentException | RuntimeException e) {
             try {
@@ -693,7 +687,7 @@ public class WorkspaceRuntimes {
             }
             eventsService.publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                             .withWorkspaceId(workspaceId)
-                                            .withEventType(EventType.ERROR)
+                                            .withPrevStatus(WorkspaceStatus.STOPPED)
                                             .withPrevStatus(WorkspaceStatus.STARTING)
                                             .withError(environmentStartError));
 
@@ -746,7 +740,7 @@ public class WorkspaceRuntimes {
                                                                     ServerException {
         eventsService.publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                         .withWorkspaceId(workspaceId)
-                                        .withEventType(EventType.SNAPSHOT_CREATING)
+                                        .withStatus(WorkspaceStatus.SNAPSHOTTING)
                                         .withPrevStatus(WorkspaceStatus.RUNNING));
 
         WorkspaceRuntimeImpl runtime = get(workspaceId).getRuntime();
@@ -763,7 +757,7 @@ public class WorkspaceRuntimes {
                     compareAndSetStatus(workspaceId, WorkspaceStatus.SNAPSHOTTING, WorkspaceStatus.RUNNING);
                     eventsService.publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                                     .withWorkspaceId(workspaceId)
-                                                    .withEventType(EventType.SNAPSHOT_CREATION_ERROR)
+                                                    .withStatus(WorkspaceStatus.RUNNING)
                                                     .withPrevStatus(WorkspaceStatus.SNAPSHOTTING)
                                                     .withError(x.getMessage()));
                     throw x;
@@ -791,7 +785,7 @@ public class WorkspaceRuntimes {
             compareAndSetStatus(workspaceId, WorkspaceStatus.SNAPSHOTTING, WorkspaceStatus.RUNNING);
             eventsService.publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                             .withWorkspaceId(workspaceId)
-                                            .withEventType(EventType.SNAPSHOT_CREATION_ERROR)
+                                            .withStatus(WorkspaceStatus.RUNNING)
                                             .withPrevStatus(WorkspaceStatus.SNAPSHOTTING)
                                             .withError(x.getMessage()));
             throw x;
@@ -799,7 +793,7 @@ public class WorkspaceRuntimes {
         compareAndSetStatus(workspaceId, WorkspaceStatus.SNAPSHOTTING, WorkspaceStatus.RUNNING);
         eventsService.publish(DtoFactory.newDto(WorkspaceStatusEvent.class)
                                         .withWorkspaceId(workspaceId)
-                                        .withEventType(EventType.SNAPSHOT_CREATED)
+                                        .withStatus(WorkspaceStatus.RUNNING)
                                         .withPrevStatus(WorkspaceStatus.SNAPSHOTTING));
     }
 

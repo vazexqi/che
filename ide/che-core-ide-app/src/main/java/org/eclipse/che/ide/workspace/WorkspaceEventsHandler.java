@@ -396,7 +396,7 @@ public class WorkspaceEventsHandler {
         @Override
         protected void onMessageReceived(WorkspaceStatusEvent statusEvent) {
             final String workspaceId = statusEvent.getWorkspaceId();
-            switch (statusEvent.getEventType()) {
+            switch (statusEvent.getStatus()) {
                 case STARTING:
                     onWorkspaceStarting(workspaceId);
                     break;
@@ -404,16 +404,15 @@ public class WorkspaceEventsHandler {
                 case RUNNING:
                     if (statusEvent.getPrevStatus() == WorkspaceStatus.STARTING) {
                         onWorkspaceStarted(workspaceId);
+                    } else if (statusEvent.getPrevStatus() == WorkspaceStatus.SNAPSHOTTING) {
+                        if (statusEvent.getError() == null) {
+                            loader.setSuccess(LoaderPresenter.Phase.CREATING_WORKSPACE_SNAPSHOT);
+                            snapshotCreator.successfullyCreated();
+                        } else {
+                            loader.setError(LoaderPresenter.Phase.CREATING_WORKSPACE_SNAPSHOT);
+                            snapshotCreator.creationError("Snapshot creation error: " + statusEvent.getError());
+                        }
                     }
-                    break;
-
-                case ERROR:
-                    notificationManager.notify(locale.workspaceStartFailed(), FAIL, FLOAT_MODE);
-                    loader.setError(LoaderPresenter.Phase.STARTING_WORKSPACE_RUNTIME);
-                    final String workspaceName = workspace.getConfig().getName();
-                    final String error = statusEvent.getError();
-                    workspaceServiceClient.getWorkspaces(SKIP_COUNT, MAX_COUNT).then(showErrorDialog(workspaceName, error));
-                    eventBus.fireEvent(new WorkspaceStoppedEvent(workspace));
                     break;
 
                 case STOPPING:
@@ -421,23 +420,22 @@ public class WorkspaceEventsHandler {
                     break;
 
                 case STOPPED:
-                    loader.setSuccess(LoaderPresenter.Phase.STOPPING_WORKSPACE);
-                    startWorkspaceNotification.show(statusEvent.getWorkspaceId());
-                    eventBus.fireEvent(new WorkspaceStoppedEvent(workspace));
+                    if (statusEvent.getError()  == null) {
+                        loader.setSuccess(LoaderPresenter.Phase.STOPPING_WORKSPACE);
+                        startWorkspaceNotification.show(statusEvent.getWorkspaceId());
+                        eventBus.fireEvent(new WorkspaceStoppedEvent(workspace));
+                    } else {
+                        notificationManager.notify(locale.workspaceStartFailed(), FAIL, FLOAT_MODE);
+                        loader.setError(LoaderPresenter.Phase.STARTING_WORKSPACE_RUNTIME);
+                        final String workspaceName = workspace.getConfig().getName();
+                        final String error = statusEvent.getError();
+                        workspaceServiceClient.getWorkspaces(SKIP_COUNT, MAX_COUNT).then(showErrorDialog(workspaceName, error));
+                        eventBus.fireEvent(new WorkspaceStoppedEvent(workspace));
+                    }
                     break;
 
-                case SNAPSHOT_CREATING:
+                case SNAPSHOTTING:
                     loader.show(LoaderPresenter.Phase.CREATING_WORKSPACE_SNAPSHOT);
-                    break;
-
-                case SNAPSHOT_CREATED:
-                    loader.setSuccess(LoaderPresenter.Phase.CREATING_WORKSPACE_SNAPSHOT);
-                    snapshotCreator.successfullyCreated();
-                    break;
-
-                case SNAPSHOT_CREATION_ERROR:
-                    loader.setError(LoaderPresenter.Phase.CREATING_WORKSPACE_SNAPSHOT);
-                    snapshotCreator.creationError("Snapshot creation error: " + statusEvent.getError());
                     break;
             }
         }
